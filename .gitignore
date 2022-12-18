@@ -1,0 +1,5 @@
+
+generator/
+.idea/
+data/
+cmake-build-debug/

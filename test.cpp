@@ -1,56 +1,91 @@
 #include <iostream>
+#include <cmath>
 #include "HMM.h"
 
 class Test {
 
 public:
     static void test_estimate_initial_probabilities() {
-        std::cout << ">>> Test estimate initial probabilities begin. <<<" << std::endl;
-
         const std::string states = "FBBFFBBFBFFBFFB";
         const std::string emissions = "562364166532654";
 
-        hidden_markov_chain hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
+        const int N = 2;
+        const int M = 6;
+
+        hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        double states_initial_probs[] = {8/15, 7/15};
-        double transition_initial_probs[][2] = {
-                {3/7, 5/7}, //F->F, F->B
-                {4/7, 2/7} //B->F, B->B
+        double states_initial_probs[] = {8/15., 7/15.};
+        double transition_initial_probs[N][N] = {
+                {3/7., 5/7.}, //F->F, F->B
+                {4/7., 2/7.} //B->F, B->B
         };
-        double emission_initial_probs[][6] = {
-                {0/8, 0/8, 2/8, 0/8, 3/8,3/8},
-                {1/7, 2/7, 0/7, 2/7, 0/7, 2/7}
+        double emission_initial_probs[N][M] = {
+                {0/8., 0/8., 2/8., 0/8., 3/8.,3/8.},
+                {1/7., 2/7., 0/7., 2/7., 0/7., 2/7.}
         };
 
-        //TODO: recheck ground truth
-
-        if (!is_equal_arrays(states_initial_probs, hmm._states_probabilities, 2))
+        if (!is_equal_arrays<N>(states_initial_probs, hmm._states_probabilities))
             std::cerr << "Initial states probabilities are not equal!" << std::endl;
 
-//        if (!is_equal_matrices(transition_initial_probs, hmm._transition_probabilities, 2, 2))
-//            std::cerr << "Transition states probabilities are not equal!" << std::endl;
-//
-//        if (!is_equal_matrices(emission_initial_probs, hmm._emission_probabilities, 2, 6))
-//            std::cerr << "Emission states probabilities are not equal!" << std::endl;
+        if (!is_equal_matrices<N, N>(transition_initial_probs, hmm._transition_probabilities))
+            std::cerr << "Transition probabilities are not equal!" << std::endl;
 
-        std::cout << ">>> Test estimate initial probabilities end. <<<" << std::endl;
+        if (!is_equal_matrices<N, M>(emission_initial_probs, hmm._emission_probabilities))
+            std::cerr << "Emission probabilities are not equal!" << std::endl;
+
+        std::cout << ">>> Test estimate initial probabilities done. <<<" << std::endl;
+    }
+
+    static void test_load_data() {
+        const auto islands_path = "..\\data\\relaxed-examples\\mm39_1_islands.txt";
+        const auto sequence_path = "..\\data\\relaxed-examples\\mm39_1.txt";
+
+        const int N = 2;
+        const int M = 4;
+
+        std::vector<std::pair<int, int>> islands;
+        std::string sequence;
+        std::tie(islands, sequence) = hidden_markov_chain<N, M>::load_data(islands_path, sequence_path);
+    }
+
+    static void test_convert_islands_to_string() {
+        const auto emissions = "ACTGCGCGCATTTGCGCTGCA";
+        std::vector<std::pair<int, int>> islands;
+        islands.emplace_back(3, 8); // inclusive borders
+        islands.emplace_back(13, 20);
+
+        const auto states = "---++++++----++++++++";
+        auto states_ = hidden_markov_chain<2, 4>::from_islands_to_str(islands, emissions);
+
+        if (states != states_)
+            std::cerr << "Conversion from islands to string failed! Strings do not match." << std::endl;
+
+        std::cout << ">>> Test convert islands to string done. <<<" << std::endl;
     }
 
 private:
-    static bool is_equal_arrays(double* a, double* b, int n) {
-        for (auto i = 0; i < n; i++) {
-            if (a[i] != b[i]) return false;
+    template<int N>
+    static bool is_equal_arrays(double a[N], double b[N]) {
+        for (auto i = 0; i < N; ++i) {
+            if (std::abs(a[i] - b[i]) > std::numeric_limits<double>::epsilon()) return false;
         }
         return true;
     }
 
-    static bool is_equal_matrices(double** a, double** b, int n, int m) {
-        //TODO: implementation
+    template<int N, int M>
+    static bool is_equal_matrices(double a[N][M], double b[N][M]) {
+        for (auto i = 0; i < N; ++i) {
+            if (!is_equal_arrays<M>(a[i], b[i])) return  false;
+        }
+
+        return true;
     }
 };
 
 int main() {
     Test::test_estimate_initial_probabilities();
+//    Test::test_load_data();
+    Test::test_convert_islands_to_string();
     return 0;
 }

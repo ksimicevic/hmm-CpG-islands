@@ -3,4 +3,4 @@ project(BIOINF2)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(BIOINF2 main.cpp HMM.h)
+add_executable(BIOINF2 test.cpp HMM.h)

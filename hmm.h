@@ -39,63 +39,6 @@ public:
     }
 
 private:
-    //TODO: convert std::vector<std::pair<int,int>> to string representing states
-    static std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
-            const std::string& islands_path, const std::string& sequence_path
-        ) {
-        std::ifstream islands_file(islands_path);
-        if (!islands_file.good()) {
-            std::cerr << "Path to islands " << islands_path << " is not valid" << std::endl;
-            return {{},{}};
-        }
-
-        std::string line;
-
-        std::vector<std::pair<int, int>> islands;
-        while (std::getline(islands_file, line)) {
-            auto comma = line.find(',');
-            islands.emplace_back(
-                    std::stoi(line.substr(0, comma)),
-                    std::stoi(line.substr(comma + 1))
-            );
-        }
-
-        std::ifstream sequence_file(sequence_path);
-        if (!sequence_file.good()) {
-            std::cerr << "Path to sequence " << sequence_path << " is not valid" << std::endl;
-            return {{},{}};
-        }
-
-        std::string sequence;
-
-        while (std::getline(sequence_file, line)) {
-            std::transform(line.begin(), line.end(), line.begin(),
-                  [](auto c) { return std::toupper(c); });
-            sequence.append(line);
-        }
-
-        return std::make_pair(islands, sequence);
-    }
-
-    //TODO: this fun behaves differently depending on simple or complicated model
-    static std::string from_islands_to_str(
-            const std::vector<std::pair<int,int>>& islands, const std::string& emissions, bool simple = true) {
-        // assumption: all pairs are ascending
-
-        std::string states;
-
-        //TODO: improve?
-        int current_idx = 0;
-        for (auto island: islands) {
-            states.append(island.first - current_idx, '-');
-            states.append(island.second - island.first + 1, '+');
-            current_idx = island.second + 1;
-        }
-        states.append(emissions.length() - current_idx, '-');
-
-        return states;
-    }
-
     void estimate_initial_probabilities(const std::string& states, const std::string& emissions) {
         //estimate initial probabilities for transitions, emissions and states based on frequencies, slide 4 (HMM2)
         if (states.length() != emissions.length()) {

@@ -114,7 +114,55 @@ private:
     }
 
     void viterbi_algorithm() {
+        std::vector<int> DNA = {}; // DNA sequence
 
+        double V[DNA.size()][N]; // Dynamic programming table
+        int backtrack[DNA.size()][N]; // Backtracking table (stores pointers to previous state)
+
+
+        // Initialize first column of dynamic programming table
+        for (int i = 0; i < N; i++){
+            V[0][i] = _states_probabilities[i] * _emission_probabilities[i][DNA[0]]
+            backtrack[0][i] = -1;
+        }
+
+        // Fill in rest of dynamic programming table
+        for (int t = 1; t < DNA.size(); t++){
+            for (int j = 0; j < N; j++){
+                double max_prob = 0;
+                int max_state = -1;
+                for (int i = 0; i < N; i++){
+                    double prob = V[t-1][i] * _transition_probabilities[i][j] * _emission_probabilities[j][DNA[t]];
+                    if (prob > max_prob){
+                        max_prob = prob;
+                        max_state = i;
+                    }
+                }
+                V[t][j] = max_prob;
+                backtrack[t][j] = max_state;
+            }
+        }
+
+        // Find state with highest probability in final column of dynamic programming table
+        double max_prob = 0;
+        int max_state = -1;
+        for (int i = 0; i < N; i++){
+            if (V[DNA.size()-1][i] > max_prob){
+                max_prob = V[DNA.size()-1][i];
+                max_state = i;
+            }
+        }
+
+        // Backtrack through dynamic programming table to reconstruct most likely sequence of states
+        std::vector<int> path;
+        int state = max_state;
+        for (int t = DNA.size()-1; t >= 0; t--){
+            path.push_back(state);
+            state = backtrack[t][state];
+        }
+
+        // Reverse the sequence to get the most likely sequence in the correct order
+        return std::reverse(path.begin(), path.end());
     }
 
     void baum_welch_algorithm() {

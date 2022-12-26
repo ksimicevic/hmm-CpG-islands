@@ -7,6 +7,7 @@
 #include <iostream>
 #include <array>
 #include <fstream>
+#include <set>   
 
 // forward declaration
 class Test;
@@ -21,10 +22,28 @@ class hidden_markov_chain {
     std::vector<char> _symbols;
 
 // parameters that we need to figure out
-    double _transition_probabilities[N][N]; // N x N
-    double _emission_probabilities[N][M]; // N x M
-    double _states_probabilities[N]; // N
+    double _transition_probabilities[N][N]; // N x N    // a
+    double _emission_probabilities[N][M]; // N x M      // b
+    double _states_probabilities[N]; // N               // initial_distribution
+
+// emission to emission_index_map
+    std::unordered_map<char, int> emission_to_idx;
+    std::unordered_map<char, int> state_to_idx;
+
 public:
+
+    double **get_transition_probabilities() {
+        return _transition_probabilities;
+    }
+
+    double **get_emission_probabilities() {
+        return _emission_probabilities;
+    }
+
+    double **get_states_probabilities() {
+        return _states_probabilities;
+    }
+
     hidden_markov_chain(const std::vector<char>& states, const std::vector<char>& symbols) :
             _states(states), _symbols(symbols) {
     }
@@ -75,6 +94,51 @@ private:
         }
 
         return std::make_pair(islands, sequence);
+    }
+
+    void create_default_emission_to_idx_map(){
+        emission_to_idx['A'] = 0;
+        emission_to_idx['C'] = 1;
+        emission_to_idx['G'] = 2;
+        emission_to_idx['T'] = 3;
+    }
+
+    static std::unordered_map<char, int> create_emission_to_idx_map(const std::string& emissions) {
+        std::set<char> set_of_emmisions;
+        for(char c : emissions) 
+            set_of_emmisions.insert(c);
+        
+        //for(char c : set_of_emmisions) 
+            //std::cout << c << " ";
+
+        int index = 0;
+        std::unordered_map<char, int> emission_to_idx;
+        for(char c : set_of_emmisions) 
+            emission_to_idx[c] = index++;
+        
+        for(char c : set_of_emmisions) 
+            std::cout << c << " " << emission_to_idx[c] << std::endl;
+
+        return emission_to_idx;
+    }
+
+    static std::unordered_map<char, int> create_state_to_idx_map(const std::string& states) {
+        std::set<char> set_of_states;
+        for(char c : states) 
+            set_of_states.insert(c);
+        
+        //for(char c : set_of_emmisions) 
+            //std::cout << c << " ";
+
+        int index = 0;
+        std::unordered_map<char, int> state_to_idx;
+        for(char c : set_of_states) 
+            state_to_idx[c] = index++;
+        
+        for(char c : set_of_states) 
+            std::cout << c << " " << state_to_idx[c] << std::endl;
+
+        return state_to_idx;
     }
 
     //TODO: this fun behaves differently depending on simple or complicated model
@@ -160,6 +224,99 @@ private:
                 _emission_probabilities[i][j] =
                         (double) emission_freqs[_symbols[j]][i] / (double) states_freqs[_states[i]];
         }
+    }
+
+    float **forward(const std::string& data) {
+        int data_length = data.length(); // T
+        // data // V
+        // _transition_probabilities // a
+        // _emission_probabilities // b
+        // _states_probabilities // initial_distribution
+        float** alpha = 0;
+        alpha = new float*[data_length]; // [data_length][N]
+        for(int i = 0; i < data_length; i++) {
+            alpha[i] = new float[N];
+            for(int j = 0; j < N; j++) 
+                alpha[i][j] = 0;
+        }
+
+        int V[data_length];
+        for(int i = 0; i < data_length; i++) V[i] = emission_to_idx[data[i]];
+
+        for(int j = 0; j < N; j++) {
+            alpha[0][j] = _states_probabilities[j] * _emission_probabilities[j][V[0]];
+            // std::cout << _states_probabilities[j] * _emission_probabilities[j][V[0]] << std::endl;
+        }
+
+        for(int i = 1; i < data_length; i++) {
+            for(int j = 0; j < N; j++) {
+                float result = 0;
+                for(int k = 0; k < N; k++) 
+                    result += alpha[i-1][k] * _transition_probabilities[k][j];
+                
+                result *= _emission_probabilities[j][V[i]];
+                alpha[i][j] = result;
+            }
+        }
+        std::cout << "alpha" << std::endl;
+        for(int i = 0; i < data_length; i++) {
+            for(int j = 0; j < N; j++) {
+                std::cout << alpha[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        return alpha;
+    }
+
+    float **backward(const std::string& data) {
+        int data_length = data.length(); // T
+        // data // V
+        // _transition_probabilities // a
+        // _emission_probabilities // b
+
+        float** beta = 0;
+        beta = new float*[data_length]; // [data_length][N]
+        for(int i = 0; i < data_length; i++) {
+            beta[i] = new float[N];
+            for(int j = 0; j < N; j++) 
+                beta[i][j] = 0;
+        }
+
+        int V[data_length];
+        for(int i = 0; i < data_length; i++) V[i] = emission_to_idx[data[i]];
+
+        for(int j = 0; j < N; j++) {
+            beta[data_length-1][j] = 1;
+            // wstd::cout << _states_probabilities[j] * _emission_probabilities[j][V[0]] << std::endl;
+        }
+
+        //std::cout << "beta calc" << std::endl;
+        for(int i = data_length-2; i >= 0; i--) {
+            for(int j = 0; j < N; j++) {
+                float result = 0;
+                float* result_matrix = new float[N];
+                for(int k = 0; k < N; k++) {
+                    result_matrix[k] = beta[i+1][k] * _emission_probabilities[k][V[i+1]];
+                    //std::cout << beta[i+1][k] << " * " << _emission_probabilities[k][V[i+1]] << " = " << result_matrix[k] << ", ";
+                }
+                //std::cout << std::endl;
+                
+                for(int k = 0; k < N; k++) 
+                    result += result_matrix[k] * _transition_probabilities[j][k];
+
+                beta[i][j] = result;
+            }
+        }
+        std::cout << "beta" << std::endl;
+        for(int i = 0; i < data_length; i++) {
+            for(int j = 0; j < N; j++) {
+                std::cout << beta[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        return beta;
     }
 
     float forward_parameter(int t, int i) {

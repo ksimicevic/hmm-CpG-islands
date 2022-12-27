@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cmath>
-#include "HMM.h"
+
+#include "hmm.h"
+#include "data_loading.h"
 
 class Test {
 
@@ -114,6 +116,7 @@ public:
 
         std::vector<std::pair<int, int>> islands;
         std::string sequence;
+<<<<<<< HEAD
         std::tie(islands, sequence) = hidden_markov_chain<N, M>::load_data(islands_path, sequence_path);
 
         std::cout << "islands" << std::endl;
@@ -124,6 +127,9 @@ public:
         //std::cout << "sequence" << std::endl;
         //std::cout << sequence;
 
+=======
+        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
+>>>>>>> 997b72749504aa4c01a248eaa5fd76e59438a2b1
     }
 
     static void test_convert_islands_to_string() {
@@ -132,8 +138,14 @@ public:
         islands.emplace_back(3, 8); // inclusive borders
         islands.emplace_back(13, 20);
 
-        const auto states = "---++++++----++++++++";
-        auto states_ = hidden_markov_chain<2, 4>::from_islands_to_str(islands, emissions);
+        const auto states_simple = "---++++++----++++++++";
+        auto states_simple_ = from_islands_to_str(islands, emissions);
+
+        if (states_simple != states_simple_)
+            std::cerr << "Conversion from islands to string (simple) failed! Strings do not match." << std::endl;
+
+        const auto states = "actGCGCGCatttGCGCTGCA";
+        auto states_ = from_islands_to_str(islands, emissions, false);
 
         if (states != states_)
             std::cerr << "Conversion from islands to string failed! Strings do not match." << std::endl;

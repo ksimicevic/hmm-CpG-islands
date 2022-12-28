@@ -31,21 +31,6 @@ class hidden_markov_chain {
     std::unordered_map<char, int> state_to_idx;
 
 public:
-
-
-
-    double **get_transition_probabilities() {
-        return _transition_probabilities;
-    }
-
-    double **get_emission_probabilities() {
-        return _emission_probabilities;
-    }
-
-    double **get_states_probabilities() {
-        return _states_probabilities;
-    }
-
     hidden_markov_chain(const std::vector<char>& states, const std::vector<char>& symbols) :
             _states(states), _symbols(symbols) {
     }
@@ -59,109 +44,20 @@ public:
         // call viterbi algorithm
     }
 
+    //TODO: these are never used?
+    double **get_transition_probabilities() {
+        return _transition_probabilities;
+    }
+
+    double **get_emission_probabilities() {
+        return _emission_probabilities;
+    }
+
+    const double *get_states_probabilities() const {
+        return _states_probabilities;
+    }
+
 private:
-    //TODO: convert std::vector<std::pair<int,int>> to string representing states
-    static std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
-            const std::string& islands_path, const std::string& sequence_path
-        ) {
-        std::ifstream islands_file(islands_path);
-        if (!islands_file.good()) {
-            std::cerr << "Path to islands " << islands_path << " is not valid" << std::endl;
-            return {{},{}};
-        }
-
-        std::string line;
-
-        std::vector<std::pair<int, int>> islands;
-        while (std::getline(islands_file, line)) {
-            auto comma = line.find(',');
-            islands.emplace_back(
-                    std::stoi(line.substr(0, comma)),
-                    std::stoi(line.substr(comma + 1))
-            );
-        }
-
-        std::ifstream sequence_file(sequence_path);
-        if (!sequence_file.good()) {
-            std::cerr << "Path to sequence " << sequence_path << " is not valid" << std::endl;
-            return {{},{}};
-        }
-
-        std::string sequence;
-
-        while (std::getline(sequence_file, line)) {
-            std::transform(line.begin(), line.end(), line.begin(),
-                  [](auto c) { return std::toupper(c); });
-            sequence.append(line);
-        }
-
-        return std::make_pair(islands, sequence);
-    }
-
-    void create_default_emission_to_idx_map(){
-        emission_to_idx['A'] = 0;
-        emission_to_idx['C'] = 1;
-        emission_to_idx['G'] = 2;
-        emission_to_idx['T'] = 3;
-    }
-
-    static std::unordered_map<char, int> create_emission_to_idx_map(const std::string& emissions) {
-        std::set<char> set_of_emmisions;
-        for(char c : emissions) 
-            set_of_emmisions.insert(c);
-        
-        //for(char c : set_of_emmisions) 
-            //std::cout << c << " ";
-
-        int index = 0;
-        std::unordered_map<char, int> emission_to_idx;
-        for(char c : set_of_emmisions) 
-            emission_to_idx[c] = index++;
-        
-        for(char c : set_of_emmisions) 
-            std::cout << c << " " << emission_to_idx[c] << std::endl;
-
-        return emission_to_idx;
-    }
-
-    static std::unordered_map<char, int> create_state_to_idx_map(const std::string& states) {
-        std::set<char> set_of_states;
-        for(char c : states) 
-            set_of_states.insert(c);
-        
-        //for(char c : set_of_emmisions) 
-            //std::cout << c << " ";
-
-        int index = 0;
-        std::unordered_map<char, int> state_to_idx;
-        for(char c : set_of_states) 
-            state_to_idx[c] = index++;
-        
-        for(char c : set_of_states) 
-            std::cout << c << " " << state_to_idx[c] << std::endl;
-
-        return state_to_idx;
-    }
-
-    //TODO: this fun behaves differently depending on simple or complicated model
-    static std::string from_islands_to_str(
-            const std::vector<std::pair<int,int>>& islands, const std::string& emissions, bool simple = true) {
-        // assumption: all pairs are ascending
-
-        std::string states;
-
-        //TODO: improve?
-        int current_idx = 0;
-        for (auto island: islands) {
-            states.append(island.first - current_idx, '-');
-            states.append(island.second - island.first + 1, '+');
-            current_idx = island.second + 1;
-        }
-        states.append(emissions.length() - current_idx, '-');
-
-        return states;
-    }
-
     void estimate_initial_probabilities(const std::string& states, const std::string& emissions) {
         //estimate initial probabilities for transitions, emissions and states based on frequencies, slide 4 (HMM2)
         if (states.length() != emissions.length()) {
@@ -226,6 +122,51 @@ private:
                 _emission_probabilities[i][j] =
                         (double) emission_freqs[_symbols[j]][i] / (double) states_freqs[_states[i]];
         }
+    }
+
+    void create_default_emission_to_idx_map(){
+        emission_to_idx['A'] = 0;
+        emission_to_idx['C'] = 1;
+        emission_to_idx['G'] = 2;
+        emission_to_idx['T'] = 3;
+    }
+
+    static std::unordered_map<char, int> create_emission_to_idx_map(const std::string& emissions) {
+        std::set<char> set_of_emmisions;
+        for(char c : emissions) 
+            set_of_emmisions.insert(c);
+        
+        //for(char c : set_of_emmisions) 
+            //std::cout << c << " ";
+
+        int index = 0;
+        std::unordered_map<char, int> emission_to_idx;
+        for(char c : set_of_emmisions) 
+            emission_to_idx[c] = index++;
+        
+        for(char c : set_of_emmisions) 
+            std::cout << c << " " << emission_to_idx[c] << std::endl;
+
+        return emission_to_idx;
+    }
+
+    static std::unordered_map<char, int> create_state_to_idx_map(const std::string& states) {
+        std::set<char> set_of_states;
+        for(char c : states) 
+            set_of_states.insert(c);
+        
+        //for(char c : set_of_emmisions) 
+            //std::cout << c << " ";
+
+        int index = 0;
+        std::unordered_map<char, int> state_to_idx;
+        for(char c : set_of_states) 
+            state_to_idx[c] = index++;
+        
+        for(char c : set_of_states) 
+            std::cout << c << " " << state_to_idx[c] << std::endl;
+
+        return state_to_idx;
     }
 
     float **forward(const std::string& data) {
@@ -323,10 +264,12 @@ private:
 
     float forward_parameter(int t, int i) {
         // probability that model at time t is in state i, slide 6 (HMM2)
+        return 0;
     }
 
     float backward_parameter(int t, int i) {
         // probability that model at time t is in state i and that it emitted T-t symbols, slide 4 (HMM2)
+        return 0;
     }
 
     void viterbi_algorithm() {
@@ -338,7 +281,7 @@ private:
 
         // Initialize first column of dynamic programming table
         for (int i = 0; i < N; i++){
-            V[0][i] = _states_probabilities[i] * _emission_probabilities[i][DNA[0]]
+            V[0][i] = _states_probabilities[i] * _emission_probabilities[i][DNA[0]];
             backtrack[0][i] = -1;
         }
 

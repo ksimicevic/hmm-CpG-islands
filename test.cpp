@@ -16,7 +16,7 @@ public:
 
         std::vector<std::pair<int, int>> islands;
         std::string sequence;
-        std::tie(islands, sequence) = hidden_markov_chain<N, M>::load_data(islands_path, sequence_path);
+        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
 
         hidden_markov_chain<N, M>::create_emission_to_idx_map(sequence);
 
@@ -116,20 +116,14 @@ public:
 
         std::vector<std::pair<int, int>> islands;
         std::string sequence;
-<<<<<<< HEAD
-        std::tie(islands, sequence) = hidden_markov_chain<N, M>::load_data(islands_path, sequence_path);
+        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
 
         std::cout << "islands" << std::endl;
-        for(int i = 0; i < islands.size(); i++)
+        for (int i = 0; i < islands.size(); i++)
             std::cout << islands[i].first << ", " << islands[i].second << std::endl;
-        
-        std::cout << std::endl;
-        //std::cout << "sequence" << std::endl;
-        //std::cout << sequence;
 
-=======
+
         std::tie(islands, sequence) = load_data(islands_path, sequence_path);
->>>>>>> 997b72749504aa4c01a248eaa5fd76e59438a2b1
     }
 
     static void test_convert_islands_to_string() {

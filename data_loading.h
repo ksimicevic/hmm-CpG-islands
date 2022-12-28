@@ -46,7 +46,8 @@ std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
 }
 
 std::string from_islands_to_str(
-        const std::vector<std::pair<int,int>>& islands, const std::string& emissions, bool simple = true) {
+        const std::vector<std::pair<int,int>>& islands, const std::string& emissions, bool simple = true
+) {
     // assumption: all pairs are ascending
 
     std::string states;

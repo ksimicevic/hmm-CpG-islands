@@ -34,18 +34,17 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        double states_initial_probs[] = {8/15., 7/15.};
-        double transition_initial_probs[N][N] = {
-                {3/7., 5/7.}, //F->F, F->B
-                {4/7., 2/7.} //B->F, B->B
-        };
-        double emission_initial_probs[N][M] = {
-                {0/8., 0/8., 2/8., 0/8., 3/8., 3/8.},
-                {1/7., 2/7., 0/7., 2/7., 0/7., 2/7.}
-        };
-
         hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
-        hmm.forward(emissions);
+        double ** alpha = hmm.forward(emissions);
+
+        std::cout << "alpha" << std::endl;
+        for(int i = 0; i < emissions.length(); i++) {
+            for(int j = 0; j < N; j++) {
+                std::cout << alpha[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
         std::cout << ">>> Test forward done. <<<" << std::endl;
     }
 
@@ -60,19 +59,35 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        double states_initial_probs[] = {8/15., 7/15.};
-        double transition_initial_probs[N][N] = {
-                {3/7., 5/7.}, //F->F, F->B
-                {4/7., 2/7.} //B->F, B->B
-        };
-        double emission_initial_probs[N][M] = {
-                {0/8., 0/8., 2/8., 0/8., 3/8., 3/8.},
-                {1/7., 2/7., 0/7., 2/7., 0/7., 2/7.}
-        };
+        hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
+        double ** beta = hmm.backward(emissions);
+
+        std::cout << "beta" << std::endl;
+        for(int i = 0; i < emissions.length(); i++) {
+            for(int j = 0; j < N; j++) {
+                std::cout << beta[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << ">>> Test backward done. <<<" << std::endl;
+    }
+
+    static void test_baum_welch_algorithm() {
+        std::cout << ">>> Test baum_welch_algorithm start. <<<" << std::endl;
+        const std::string states = "FBBFFBBFBFFBFFB";
+        const std::string emissions = "562364166532654";
+
+        const int N = 2;
+        const int M = 6;
+
+        hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
+        hmm.estimate_initial_probabilities(states, emissions);
 
         hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
-        hmm.backward(emissions);
-        std::cout << ">>> Test backward done. <<<" << std::endl;
+        hmm.baum_welch_algorithm(emissions, 1000);
+
+        std::cout << ">>> Test baum_welch_algorithm done. <<<" << std::endl;
     }
 
     static void test_estimate_initial_probabilities() {
@@ -171,7 +186,8 @@ int main() {
     Test::test_load_data();
     Test::test_convert_islands_to_string();
     Test::test_create_emission_to_idx_map();
-    Test::test_forward();
-    Test::test_backward();
+    //Test::test_forward();
+    //Test::test_backward();
+    Test::test_baum_welch_algorithm();
     return 0;
 }

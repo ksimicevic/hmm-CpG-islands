@@ -162,6 +162,26 @@ public:
         std::cout << ">>> Test convert islands to string done. <<<" << std::endl;
     }
 
+    static void test_viterbi(){
+        std::cout << ">>> Test viterbi start. <<<" << std::endl;
+        
+        const std::string states = "FBBFFBBFBFFBFFB";
+        const std::string emissions = "562364166532654";
+
+        const int N = 2;
+        const int M = 6;
+
+        hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
+
+        hmm.estimate_initial_probabilities(states, emissions);
+
+        std::string result = hmm.viterbi_algorithm(states);
+
+        std::cout << result << std::endl;
+
+        std::cout << ">>> Test viterbi done. <<<" << std::endl;
+    }
+
 private:
     template<int N>
     static bool is_equal_arrays(double a[N], double b[N]) {
@@ -189,5 +209,6 @@ int main() {
     //Test::test_forward();
     //Test::test_backward();
     Test::test_baum_welch_algorithm();
+    Test::test_viterbi();
     return 0;
 }

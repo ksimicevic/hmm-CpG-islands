@@ -258,56 +258,85 @@ private:
         return 0;
     }
 
-    void viterbi_algorithm() {
-        std::vector<int> DNA = {}; // DNA sequence
+    std::string viterbi_algorithm(const std::string& data) {
 
-        double V[DNA.size()][N]; // Dynamic programming table
-        int backtrack[DNA.size()][N]; // Backtracking table (stores pointers to previous state)
+        std::vector<int> DNA;
+        std::unordered_map<char, int> state_to_idx = create_state_to_idx_map(data);
 
+        std::unordered_map<int, char> idx_to_state;
+        for(auto& it : state_to_idx) idx_to_state[it.second] = it.first;
 
-        // Initialize first column of dynamic programming table
-        for (int i = 0; i < N; i++){
-            V[0][i] = _states_probabilities[i] * _emission_probabilities[i][DNA[0]];
-            backtrack[0][i] = -1;
+        for(char c : data) DNA.push_back(state_to_idx[c]);
+
+        int data_length = DNA.size();
+        int transition_length = sizeof _transition_probabilities / sizeof _transition_probabilities[0];
+
+        double** omega = 0;
+        omega = new double*[data_length]; // [T][M]
+        for(int i = 0; i < data_length; i++) {
+            omega[i] = new double[transition_length];
+            for(int j = 0; j < transition_length; j++) 
+                omega[i][j] = 0;
         }
 
-        // Fill in rest of dynamic programming table
-        for (int t = 1; t < DNA.size(); t++){
-            for (int j = 0; j < N; j++){
-                double max_prob = 0;
-                int max_state = -1;
-                for (int i = 0; i < N; i++){
-                    double prob = V[t-1][i] * _transition_probabilities[i][j] * _emission_probabilities[j][DNA[t]];
-                    if (prob > max_prob){
-                        max_prob = prob;
-                        max_state = i;
+        for(int i = 0; i < transition_length; i++) {
+            omega[0][i] = log(_states_probabilities[i] * _emission_probabilities[i][DNA[0]]);
+        }
+
+        int** prev = 0;
+        prev = new int*[data_length-1]; // [T-1][M]
+        for(int i = 0; i < data_length-1; i++) {
+            prev[i] = new int[transition_length];
+            for(int j = 0; j < transition_length; j++) 
+                prev[i][j] = 0;
+        }
+
+        for(int t = 1; t < data_length; t++) {
+            for(int j = 0; j < transition_length; j++) {
+                double max = -INFINITY;
+                int max_idx = 0;
+                for(int i = 0; i < transition_length; i++) {
+                    double probability = omega[t-1][i] + log(_transition_probabilities[i][j]) + log(_emission_probabilities[j][DNA[t]]);
+                    if(probability > max) {
+                        max = probability;
+                        max_idx = i;
                     }
                 }
-                V[t][j] = max_prob;
-                backtrack[t][j] = max_state;
+                omega[t][j] = max;
+                prev[t-1][j] = max_idx;
+
             }
         }
 
-        // Find state with highest probability in final column of dynamic programming table
-        double max_prob = 0;
-        int max_state = -1;
-        for (int i = 0; i < N; i++){
-            if (V[DNA.size()-1][i] > max_prob){
-                max_prob = V[DNA.size()-1][i];
-                max_state = i;
+        int* S = new int[data_length];
+        for(int i = 0; i < data_length; i++) S[i] = 0;
+
+        double max = -INFINITY;
+        int max_idx = 0;
+        for(int i = 0; i < transition_length; i++) {
+            if(omega[data_length-1][i] > max) {
+                max = omega[data_length-1][i];
+                max_idx = i;
             }
         }
+        int last_state = max_idx;
 
-        // Backtrack through dynamic programming table to reconstruct most likely sequence of states
-        std::vector<int> path;
-        int state = max_state;
-        for (int t = DNA.size()-1; t >= 0; t--){
-            path.push_back(state);
-            state = backtrack[t][state];
+        S[0] = last_state;
+
+        int backtrack_index = 1;
+        for(int i = data_length-2; i >= 0; i--) {
+            S[backtrack_index] = prev[i][last_state];
+            last_state = prev[i][last_state];
+            backtrack_index++;
         }
 
-        // Reverse the sequence to get the most likely sequence in the correct order
-        return std::reverse(path.begin(), path.end());
+        std::string result = "";
+        for(int i = data_length-1; i >= 0; i--) {
+            result += idx_to_state[S[i]];
+        }
+
+        return result;
+
     }
 
     void baum_welch_algorithm(const std::string& data, int n_iter) {

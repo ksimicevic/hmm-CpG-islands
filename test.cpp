@@ -7,21 +7,19 @@
 class Test {
 
 public:
-    static void test_create_emission_to_idx_map() {
-        const auto islands_path = "data\\relaxed-examples\\mm39_1_islands.txt";
-        const auto sequence_path = "data\\relaxed-examples\\mm39_1.txt";
-
-        const int N = 2;
-        const int M = 4;
-
-        std::vector<std::pair<int, int>> islands;
-        std::string sequence;
-        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
-
-        hidden_markov_chain<N, M>::create_emission_to_idx_map(sequence);
-
-        std::cout << ">>> Test create emission to idx map done. <<<" << std::endl;
-    }
+//    static void test_create_emission_to_idx_map() {
+//        const auto islands_path = "data\\relaxed-examples\\mm39_1_islands.txt";
+//        const auto sequence_path = "data\\relaxed-examples\\mm39_1.txt";
+//
+//        const int N = 2;
+//        const int M = 4;
+//
+//        std::string sequence = load_sequence(sequence_path);
+//
+//        hidden_markov_chain<N, M>::create_emission_to_idx_map(sequence);
+//
+//        std::cout << ">>> Test create emission to idx map done. <<<" << std::endl;
+//    }
 
     static void test_forward() {
         std::cout << ">>> Test forward start. <<<" << std::endl;
@@ -34,7 +32,6 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
         double ** alpha = hmm.forward(emissions);
 
         std::cout << "alpha" << std::endl;
@@ -59,7 +56,6 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
         double ** beta = hmm.backward(emissions);
 
         std::cout << "beta" << std::endl;
@@ -84,7 +80,6 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        hmm.emission_to_idx = hidden_markov_chain<N, M>::create_emission_to_idx_map(emissions);
         hmm.baum_welch_algorithm(emissions, 1000);
 
         std::cout << ">>> Test baum_welch_algorithm done. <<<" << std::endl;
@@ -120,25 +115,6 @@ public:
             std::cerr << "Emission probabilities are not equal!" << std::endl;
 
         std::cout << ">>> Test estimate initial probabilities done. <<<" << std::endl;
-    }
-
-    static void test_load_data() {
-        const auto islands_path = "data\\relaxed-examples\\mm39_1_islands.txt";
-        const auto sequence_path = "data\\relaxed-examples\\mm39_1.txt";
-
-        const int N = 2;
-        const int M = 4;
-
-        std::vector<std::pair<int, int>> islands;
-        std::string sequence;
-        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
-
-        std::cout << "islands" << std::endl;
-        for (int i = 0; i < islands.size(); i++)
-            std::cout << islands[i].first << ", " << islands[i].second << std::endl;
-
-
-        std::tie(islands, sequence) = load_data(islands_path, sequence_path);
     }
 
     static void test_convert_islands_to_string() {
@@ -182,6 +158,29 @@ public:
         std::cout << ">>> Test viterbi done. <<<" << std::endl;
     }
 
+    static void test_mm39_relaxed_simple() {
+        const std::string train_seq_path = "..\\data\\sequences\\mm39_1.txt";
+        const std::string train_path = "..\\data\\relaxed-examples\\mm39_1_islands.txt";
+
+        const std::string test_seq_path = "..\\data\\sequences\\mm39_2.txt";
+        const std::string test_path = "..\\data\\relaxed-examples\\mm39_2_islands.txt";
+
+        std::string train_sequence, train_emissions, test_sequence, test_emissions;
+        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
+        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
+
+        hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
+        hmm.fit(train_sequence, train_emissions, 10);
+
+        auto predicted_emissions = hmm.predict(test_sequence);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+        std::cout << "Accuracy: " << accuracy << std::endl;
+        std::cout << "Hit-or-miss: " << hit_or_miss << std::endl;
+    }
+
 private:
     template<int N>
     static bool is_equal_arrays(double a[N], double b[N]) {
@@ -202,13 +201,13 @@ private:
 };
 
 int main() {
-    Test::test_estimate_initial_probabilities();
-    Test::test_load_data();
-    Test::test_convert_islands_to_string();
-    Test::test_create_emission_to_idx_map();
-    //Test::test_forward();
-    //Test::test_backward();
-    Test::test_baum_welch_algorithm();
-    Test::test_viterbi();
+//    Test::test_estimate_initial_probabilities();
+//    Test::test_convert_islands_to_string();
+//    Test::test_create_emission_to_idx_map();
+//    //Test::test_forward();
+//    //Test::test_backward();
+//    Test::test_baum_welch_algorithm();
+//    Test::test_viterbi();
+    Test::test_mm39_relaxed_simple();
     return 0;
 }

@@ -8,9 +8,9 @@
 #include <array>
 #include <fstream>
 
-std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
-        const std::string& islands_path, const std::string& sequence_path
-) {
+namespace {
+
+std::vector<std::pair<int,int>> load_island(const std::string& islands_path) {
     std::ifstream islands_file(islands_path);
     if (!islands_file.good()) {
         std::cerr << "Path to islands " << islands_path << " is not valid" << std::endl;
@@ -18,7 +18,6 @@ std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
     }
 
     std::string line;
-
     std::vector<std::pair<int, int>> islands;
     while (std::getline(islands_file, line)) {
         auto comma = line.find(',');
@@ -28,21 +27,24 @@ std::pair<std::vector<std::pair<int, int>>, std::string> load_data(
         );
     }
 
+    return islands;
+}
+
+std::string load_sequence(const std::string& sequence_path) {
     std::ifstream sequence_file(sequence_path);
     if (!sequence_file.good()) {
         std::cerr << "Path to sequence " << sequence_path << " is not valid" << std::endl;
         return {{},{}};
     }
 
-    std::string sequence;
-
+    std::string sequence, line;
     while (std::getline(sequence_file, line)) {
         std::transform(line.begin(), line.end(), line.begin(),
                        [](auto c) { return std::toupper(c); });
         sequence.append(line);
     }
 
-    return std::make_pair(islands, sequence);
+    return sequence;
 }
 
 std::string from_islands_to_str(
@@ -73,12 +75,13 @@ std::string from_islands_to_str(
     return states;
 }
 
+} // anonymous namespace
+
 std::pair<std::string, std::string> parse_data(
         const std::string& islands_path, const std::string& sequence_path, bool simple = true
 ) {
-    std::vector<std::pair<int,int>> islands;
-    std::string emissions;
+    auto islands = load_island(islands_path);
+    auto sequence = load_sequence(sequence_path);
 
-    std::tie(islands, emissions) = load_data(islands_path, sequence_path);
-    return std::make_pair(from_islands_to_str(islands,emissions, simple), emissions);
+    return std::make_pair(from_islands_to_str(islands,sequence, simple), sequence);
 }

@@ -36,11 +36,11 @@ public:
             emission_to_idx(create_emission_to_idx_map(symbols)) {
     }
 
-    void fit(const std::string& states, const std::string& emissions, int n_iter) {
-        create_default_emission_to_idx_map();
-        create_default_state_to_idx_map();
+    void fit(const std::string& states, const std::string& emissions, int batch_size, int n_iter) {
+        // create_default_emission_to_idx_map();
+        // create_default_state_to_idx_map();
         estimate_initial_probabilities(states, emissions);
-        baum_welch_algorithm(emissions, n_iter);
+        baum_welch_algorithm(emissions, batch_size, n_iter);
     }
 
     std::string predict(const std::string& data) {
@@ -222,7 +222,7 @@ private:
 
         for (int j = 0; j < N; j++) {
             beta[data_length - 1][j] = 1;
-            // wstd::cout << _states_probabilities[j] * _emission_probabilities[j][V[0]] << std::endl;
+            //std::cout << _states_probabilities[j] * _emission_probabilities[j][V[0]] << std::endl;
         }
 
         //std::cout << "beta calc" << std::endl;
@@ -346,151 +346,181 @@ private:
         std::cout << "_emission_probabilities end" << std::endl << std::endl;
     }
 
-    void baum_welch_algorithm(const std::string& data, int n_iter) {
-        int data_length = data.length(); // T
+    void baum_welch_algorithm(const std::string& input_data, int batch_size, int n_iter) {
+        int all_data_length = input_data.length(); // T
         // data // V
         // _transition_probabilities // a
         // _emission_probabilities // b
         // _states_probabilities // initial_distribution
         // M na internetu je ovdje N
-        // print_transition_probabilities_and__emission_probabilities();
+        print_transition_probabilities_and__emission_probabilities();
 
-        int *V = new int[data_length];
-        for (int i = 0; i < data_length; i++) V[i] = emission_to_idx[data[i]];
+        int *transformed_data = new int[all_data_length];
+        for (int i = 0; i < all_data_length; i++) transformed_data[i] = emission_to_idx[input_data[i]];
+        int data_length = batch_size;
 
-        for (int n = 0; n < n_iter; n++) {
-            double** alpha = forward(data);
-            double** beta = backward(data);
+        int batch_index = 0;
 
-            // Inicijalizacija xi
-            double*** xi = new double** [N];
-            for (int j = 0; j < N; j++) {
-                xi[j] = new double* [N];
-                for (int k = 0; k < N; k++) {
-                    xi[j][k] = new double[data_length - 1];
-                    for (int m = 0; m < data_length - 1; m++) xi[j][k][m] = 0;
-                }
-            }
+        int number_of_batches = all_data_length / batch_size;
+        if(all_data_length % batch_size != 0) number_of_batches++;
 
-            for (int t = 0; t < data_length - 1; t++) {
-                double* first_dot = new double[N]; // np.dot(alpha2[t, :].T, a2)
-                for (int t_alpha = 0; t_alpha < N; t_alpha++) {
-                    double first_dot_r = 0;
-                    for (int t_transition = 0; t_transition < N; t_transition++)
-                        first_dot_r += alpha[t][t_transition] * _transition_probabilities[t_transition][t_alpha];
-                    first_dot[t_alpha] = first_dot_r;
-                }
+        std::string data = "";
 
-                double* second_result = new double[N]; // b2[:, V2[t + 1]].T
-                for (int vpom = 0; vpom < N; vpom++)
-                    second_result[vpom] = _emission_probabilities[vpom][V[t + 1]];
+        while(batch_index < number_of_batches) {
+            std::cout << "Batch: " << batch_index << std::endl;
+            if(batch_index == number_of_batches - 1) data_length = all_data_length % batch_size;
+            int *V = new int[data_length];
+            for (int i = 0; i < data_length; i++) V[i + batch_index * batch_size] = transformed_data[i + batch_index * batch_size];
+            
+            size_t  start_index = batch_index * batch_size;
+            size_t  size = data_length;
 
-                double* third_result = new double[N]; // np.dot(alpha2[t, :].T, a2) * b2[:, V2[t + 1]].T
-                for (int vpom = 0; vpom < N; vpom++)
-                    third_result[vpom] = first_dot[vpom] * second_result[vpom];
+            std::cout << "start_index: " << start_index << std::endl;
+            std::cout << "size: " << size << std::endl;
 
-                double* fourth_result = new double[N]; // beta2[t + 1, :]
-                for (int vpom = 0; vpom < N; vpom++)
-                    fourth_result[vpom] = beta[t + 1][vpom];
+            data = input_data.substr(0, 100);
+            std::cout << "data: " << data << std::endl;
 
-                // for (int vpom = 0; vpom < N; vpom++) {
-                //     if(t == 0) {
-                //         std::cout << "third_result[vpom]: " << third_result[vpom] << std::endl;
-                //         std::cout << "fourth_result[vpom]: " << fourth_result[vpom] << std::endl;
-                //     }
-                // }
+            for (int n = 0; n < n_iter; n++) {
+                double** alpha = forward(data);
+                double** beta = backward(data);
 
-
-                double denominator = 0;
-                for (int vpom = 0; vpom < N; vpom++)
-                    denominator += third_result[vpom] * fourth_result[vpom];
-                // if(t == 0)std::cout << "denominator: " << denominator << std::endl;
-
-
-                for (int i = 0; i < N; i++) {
-                    double* numerator = new double[N]; // alpha2[t, i] * a2[i, :] * b2[:, V2[t + 1]].T * beta2[t + 1, :].T
-                    for (int vpom = 0; vpom < N; vpom++)
-                        numerator[vpom] = alpha[t][i] * _transition_probabilities[i][vpom] *
-                                          _emission_probabilities[vpom][V[t + 1]] * beta[t + 1][vpom];
-
-                    for (int vpom = 0; vpom < N; vpom++) 
-                        xi[i][vpom][t] = numerator[vpom] / denominator;
-
-                }
-            }
-
-            // std::cout << "1" << std::endl;
-            // print_transition_probabilities_and__emission_probabilities();
-
-
-            double** gamma = new double* [N]; // np.sum(xi, axis=1)
-            double* gamma_sum_by_1_axis = new double[N]; // np.sum(gamma, axis=1).reshape((-1, 1))
-            for (int vpom1 = 0; vpom1 < N; vpom1++) {
-                gamma[vpom1] = new double[data_length - 1];
-                gamma_sum_by_1_axis[vpom1] = 0;
-                for (int vpom2 = 0; vpom2 < data_length - 1; vpom2++) {
-                    gamma[vpom1][vpom2] = 0;
-                    for (int vpom3 = 0; vpom3 < N; vpom3++)
-                        gamma[vpom1][vpom2] += xi[vpom1][vpom3][vpom2];
-                    gamma_sum_by_1_axis[vpom1] += gamma[vpom1][vpom2];
-                    // std::cout << gamma_sum_by_1_axis[vpom1] << " ";
-                }
-                // std::cout << std::endl;
-            }
-
-            double** pom_var_gamma = new double* [N];// np.sum(xi, 2)
-            for (int vpom1 = 0; vpom1 < N; vpom1++) {
-                pom_var_gamma[vpom1] = new double[N];
-                for (int vpom2 = 0; vpom2 < N; vpom2++) {
-                    pom_var_gamma[vpom1][vpom2] = 0;
-                    for (int vpom3 = 0; vpom3 < data_length - 1; vpom3++)
-                        pom_var_gamma[vpom1][vpom2] += xi[vpom1][vpom2][vpom3];
-
-                    _transition_probabilities[vpom1][vpom2] = pom_var_gamma[vpom1][vpom2] / gamma_sum_by_1_axis[vpom1];
-                }
-            }
-
-            // std::cout << "2" << std::endl;
-            // print_transition_probabilities_and__emission_probabilities();
-
-
-            // Add additional T'th element in gamma
-            double* xi_sum_by_axis_2 = new double[N]; // np.sum(xi[:, :, T - 2], axis=0)
-            for (int vpom1 = 0; vpom1 < N; vpom1++) {
-                xi_sum_by_axis_2[vpom1] = 0;
-                for (int vpom2 = 0; vpom2 < N; vpom2++)
-                    xi_sum_by_axis_2[vpom1] += xi[vpom2][vpom1][data_length - 2];
-            }
-
-            double** new_gamma = new double* [N];// gamma = np.hstack((gamma, np.sum(xi[:, :, T - 2], axis=0).reshape((-1, 1))))
-
-            for (int vpom1 = 0; vpom1 < N; vpom1++) {
-                new_gamma[vpom1] = new double[data_length];
-                for (int vpom2 = 0; vpom2 < data_length - 1; vpom2++)
-                    new_gamma[vpom1][vpom2] = gamma[vpom1][vpom2];
-
-                new_gamma[vpom1][data_length - 1] = xi_sum_by_axis_2[vpom1];
-            }
-
-            // M je K
-            double* denominator_2 = new double[N];
-            for (int vpom1 = 0; vpom1 < N; vpom1++)
-                denominator_2[vpom1] = gamma_sum_by_1_axis[vpom1] + xi_sum_by_axis_2[vpom1];
-
-            for (int vpom1 = 0; vpom1 < M; vpom1++) {
-                for (int vpom2 = 0; vpom2 < N; vpom2++) {
-                    double pom_new_gamma_sum = 0;
-                    for (int vpom3 = 0; vpom3 < data_length; vpom3++) {
-                        if (vpom1 == V[vpom3])
-                            pom_new_gamma_sum += new_gamma[vpom2][vpom3];
+                // Inicijalizacija xi
+                double*** xi = new double** [N];
+                for (int j = 0; j < N; j++) {
+                    xi[j] = new double* [N];
+                    for (int k = 0; k < N; k++) {
+                        xi[j][k] = new double[data_length - 1];
+                        for (int m = 0; m < data_length - 1; m++) xi[j][k][m] = 0;
                     }
-                    _emission_probabilities[vpom2][vpom1] = pom_new_gamma_sum / denominator_2[vpom2];
                 }
+
+                for (int t = 0; t < data_length - 1; t++) {
+                    double* first_dot = new double[N]; // np.dot(alpha2[t, :].T, a2)
+                    for (int t_alpha = 0; t_alpha < N; t_alpha++) {
+                        double first_dot_r = 0;
+                        for (int t_transition = 0; t_transition < N; t_transition++)
+                            first_dot_r += alpha[t][t_transition] * _transition_probabilities[t_transition][t_alpha];
+                        first_dot[t_alpha] = first_dot_r;
+                    }
+
+                    double* second_result = new double[N]; // b2[:, V2[t + 1]].T
+                    for (int vpom = 0; vpom < N; vpom++)
+                        second_result[vpom] = _emission_probabilities[vpom][V[t + 1]];
+
+                    double* third_result = new double[N]; // np.dot(alpha2[t, :].T, a2) * b2[:, V2[t + 1]].T
+                    for (int vpom = 0; vpom < N; vpom++)
+                        third_result[vpom] = first_dot[vpom] * second_result[vpom];
+
+                    double* fourth_result = new double[N]; // beta2[t + 1, :]
+                    for (int vpom = 0; vpom < N; vpom++)
+                        fourth_result[vpom] = beta[t + 1][vpom];
+
+                    // for (int vpom = 0; vpom < N; vpom++) {
+                    //     if(t == 0) {
+                    //         std::cout << "third_result[vpom]: " << third_result[vpom] << std::endl;
+                    //         std::cout << "fourth_result[vpom]: " << fourth_result[vpom] << std::endl;
+                    //     }
+                    // }
+
+
+                    double denominator = 0;
+                    for (int vpom = 0; vpom < N; vpom++)
+                        denominator += third_result[vpom] * fourth_result[vpom];
+                    // if(t == 0)std::cout << "denominator: " << denominator << std::endl;
+
+
+                    for (int i = 0; i < N; i++) {
+                        double* numerator = new double[N]; // alpha2[t, i] * a2[i, :] * b2[:, V2[t + 1]].T * beta2[t + 1, :].T
+                        for (int vpom = 0; vpom < N; vpom++)
+                            numerator[vpom] = alpha[t][i] * _transition_probabilities[i][vpom] *
+                                            _emission_probabilities[vpom][V[t + 1]] * beta[t + 1][vpom];
+
+                        for (int vpom = 0; vpom < N; vpom++) 
+                            xi[i][vpom][t] = numerator[vpom] / denominator;
+
+                    }
+                }
+
+                // std::cout << "1" << std::endl;
+                // print_transition_probabilities_and__emission_probabilities();
+
+
+                double** gamma = new double* [N]; // np.sum(xi, axis=1)
+                double* gamma_sum_by_1_axis = new double[N]; // np.sum(gamma, axis=1).reshape((-1, 1))
+                for (int vpom1 = 0; vpom1 < N; vpom1++) {
+                    gamma[vpom1] = new double[data_length - 1];
+                    gamma_sum_by_1_axis[vpom1] = 0;
+                    for (int vpom2 = 0; vpom2 < data_length - 1; vpom2++) {
+                        gamma[vpom1][vpom2] = 0;
+                        for (int vpom3 = 0; vpom3 < N; vpom3++)
+                            gamma[vpom1][vpom2] += xi[vpom1][vpom3][vpom2];
+                        gamma_sum_by_1_axis[vpom1] += gamma[vpom1][vpom2];
+                        // std::cout << gamma_sum_by_1_axis[vpom1] << " ";
+                    }
+                    // std::cout << std::endl;
+                }
+
+                double** pom_var_gamma = new double* [N];// np.sum(xi, 2)
+                for (int vpom1 = 0; vpom1 < N; vpom1++) {
+                    pom_var_gamma[vpom1] = new double[N];
+                    for (int vpom2 = 0; vpom2 < N; vpom2++) {
+                        pom_var_gamma[vpom1][vpom2] = 0;
+                        for (int vpom3 = 0; vpom3 < data_length - 1; vpom3++)
+                            pom_var_gamma[vpom1][vpom2] += xi[vpom1][vpom2][vpom3];
+
+                        _transition_probabilities[vpom1][vpom2] = pom_var_gamma[vpom1][vpom2] / gamma_sum_by_1_axis[vpom1];
+                    }
+                }
+
+                // std::cout << "2" << std::endl;
+                // print_transition_probabilities_and__emission_probabilities();
+
+
+                // Add additional T'th element in gamma
+                double* xi_sum_by_axis_2 = new double[N]; // np.sum(xi[:, :, T - 2], axis=0)
+                for (int vpom1 = 0; vpom1 < N; vpom1++) {
+                    xi_sum_by_axis_2[vpom1] = 0;
+                    for (int vpom2 = 0; vpom2 < N; vpom2++)
+                        xi_sum_by_axis_2[vpom1] += xi[vpom2][vpom1][data_length - 2];
+                }
+
+                double** new_gamma = new double* [N];// gamma = np.hstack((gamma, np.sum(xi[:, :, T - 2], axis=0).reshape((-1, 1))))
+
+                for (int vpom1 = 0; vpom1 < N; vpom1++) {
+                    new_gamma[vpom1] = new double[data_length];
+                    for (int vpom2 = 0; vpom2 < data_length - 1; vpom2++)
+                        new_gamma[vpom1][vpom2] = gamma[vpom1][vpom2];
+
+                    new_gamma[vpom1][data_length - 1] = xi_sum_by_axis_2[vpom1];
+                }
+
+                // M je K
+                double* denominator_2 = new double[N];
+                for (int vpom1 = 0; vpom1 < N; vpom1++)
+                    denominator_2[vpom1] = gamma_sum_by_1_axis[vpom1] + xi_sum_by_axis_2[vpom1];
+
+                for (int vpom1 = 0; vpom1 < M; vpom1++) {
+                    for (int vpom2 = 0; vpom2 < N; vpom2++) {
+                        double pom_new_gamma_sum = 0;
+                        for (int vpom3 = 0; vpom3 < data_length; vpom3++) {
+                            if (vpom1 == V[vpom3])
+                                pom_new_gamma_sum += new_gamma[vpom2][vpom3];
+                        }
+                        _emission_probabilities[vpom2][vpom1] = pom_new_gamma_sum / denominator_2[vpom2];
+                    }
+                }
+                free(alpha);
+                free(beta);
+                free(xi);
             }
+            print_transition_probabilities_and__emission_probabilities();
+            batch_index++;
         }
         
+        
         // print_transition_probabilities_and__emission_probabilities();
-        free(V);
+        free(transformed_data);
 
     }
 };

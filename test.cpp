@@ -80,7 +80,7 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        hmm.baum_welch_algorithm(emissions, 1000);
+        // hmm.baum_welch_algorithm(emissions, 1000);
 
         std::cout << ">>> Test baum_welch_algorithm done. <<<" << std::endl;
     }
@@ -160,18 +160,18 @@ public:
 
     static void test_mm39_relaxed_simple() {
         std::cout << ">>> Test mm39_relaxed_simple start. <<<" << std::endl;
-        const std::string train_seq_path = "..\\data\\sequences\\mm39_1.txt";
-        const std::string train_path = "..\\data\\relaxed-examples\\mm39_1_islands.txt";
+        const std::string train_seq_path = "data\\sequences\\mm39_1.txt";
+        const std::string train_path = "data\\relaxed-examples\\mm39_1_islands.txt";
 
-        const std::string test_seq_path = "..\\data\\sequences\\mm39_2.txt";
-        const std::string test_path = "..\\data\\relaxed-examples\\mm39_2_islands.txt";
+        const std::string test_seq_path = "data\\sequences\\mm39_2.txt";
+        const std::string test_path = "data\\relaxed-examples\\mm39_2_islands.txt";
 
         std::string train_sequence, train_emissions, test_sequence, test_emissions;
         std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
         std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
 
         hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
-        hmm.fit(train_sequence, train_emissions, 1);
+        hmm.fit(train_sequence, train_emissions, 100, 1);
 
         auto predicted_emissions = hmm.predict(test_sequence);
 

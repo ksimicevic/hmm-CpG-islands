@@ -3,3 +3,4 @@ generator/
 .idea/
 data/
 cmake-build-debug/
+*.fa

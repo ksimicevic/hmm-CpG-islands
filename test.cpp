@@ -158,7 +158,7 @@ public:
         std::cout << ">>> Test viterbi done. <<<" << std::endl;
     }
 
-    static void test_mm39_relaxed_simple() {
+    static void test_mm39_relaxed_simple_without_baum_welch_algorithm() {
         std::cout << ">>> Test mm39_relaxed_simple start. <<<" << std::endl;
         const std::string train_seq_path = "data\\sequences\\mm39_1.txt";
         const std::string train_path = "data\\relaxed-examples\\mm39_1_islands.txt";
@@ -171,7 +171,7 @@ public:
         std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
 
         hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
-        hmm.fit(train_sequence, train_emissions, 100, 1);
+        hmm.estimate_initial_probabilities(train_sequence, train_emissions);
 
         auto predicted_emissions = hmm.predict(test_sequence);
 
@@ -183,6 +183,127 @@ public:
         
         std::cout << ">>> Test mm39_relaxed_simple done. <<<" << std::endl;
     }
+
+    static void test_mm39_relaxed_simple() {
+        std::cout << ">>> Test mm39_relaxed_simple start. <<<" << std::endl;
+        const std::string train_seq_path = "data\\relaxed-examples\\mm39_1.txt";
+        const std::string train_path = "data\\relaxed-examples\\mm39_1_islands.txt";
+
+        const std::string test_seq_path = "data\\relaxed-examples\\mm39_2.txt";
+        const std::string test_path = "data\\relaxed-examples\\mm39_2_islands.txt";
+
+        std::string train_sequence, train_emissions, test_sequence, test_emissions;
+        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
+        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
+
+        hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
+        hmm.fit(train_sequence, train_emissions, 300, 1);
+
+        auto predicted_emissions = hmm.predict(test_sequence);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+
+        int plus = 0;
+        int minus = 0;
+
+        for(int i = 0; i < train_sequence.length(); i++) {
+            if(train_sequence.at(i) == '+') plus++;
+            else minus++;
+        }
+
+        std::cout << "Plus and minus counts:" << std::endl;
+        std::cout << plus << " " << minus << std::endl;
+        
+        // std::cout << hit_or_miss << std::endl;
+        int c_matrix[2][2] = {{0, 0}, 0, 0};
+
+        for(int i = 0; i < test_sequence.length(); i++) {
+            char real_c = test_sequence.at(i);
+            char predicted_c = predicted_emissions.at(i);
+
+            if(real_c == '+') {
+                if(predicted_c == '+') c_matrix[0][0]++;
+                else c_matrix[1][0]++;
+            }
+            else {
+                if(predicted_c == '-') c_matrix[1][1]++;
+                else c_matrix[0][1]++;
+            }
+        }
+        std::cout << "Accuracy: " << accuracy << std::endl;
+        //std::cout << "Hit-or-miss: " << hit_or_miss << std::endl;
+
+        std::cout << "Confusion matrix:" << std::endl;
+        std::cout << c_matrix[0][0] << " " << c_matrix[0][1] << std::endl;
+        std::cout << c_matrix[1][0] << " " << c_matrix[1][1] << std::endl;
+        
+        std::cout << std::endl;
+        
+        std::cout << ">>> Test mm39_relaxed_simple done. <<<" << std::endl;
+    }
+
+    static void test_chr19_0_relaxed_simple() {
+        std::cout << ">>> Test chr19_0_relaxed_simple start. <<<" << std::endl;
+        const std::string train_seq_path = "even\\sequences\\chr19_0.txt";
+        const std::string train_path = "even\\islands\\chr19_0.txt";
+
+        const std::string test_seq_path = "even\\sequences\\chr19_3.txt";
+        const std::string test_path = "even\\islands\\chr19_3.txt";
+
+        std::string train_sequence, train_emissions, test_sequence, test_emissions;
+        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
+        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
+
+        hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
+        hmm.fit(train_sequence, train_emissions, 300, 10);
+
+        auto predicted_emissions = hmm.predict(test_sequence);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+
+        int plus = 0;
+        int minus = 0;
+
+        for(int i = 0; i < train_sequence.length(); i++) {
+            if(train_sequence.at(i) == '+') plus++;
+            else minus++;
+        }
+
+        std::cout << "Plus and minus counts:" << std::endl;
+        std::cout << plus << " " << minus << std::endl;
+        
+        // std::cout << hit_or_miss << std::endl;
+        int c_matrix[2][2] = {{0, 0}, 0, 0};
+
+        for(int i = 0; i < test_sequence.length(); i++) {
+            char real_c = test_sequence.at(i);
+            char predicted_c = predicted_emissions.at(i);
+
+            if(real_c == '+') {
+                if(predicted_c == '+') c_matrix[0][0]++;
+                else c_matrix[1][0]++;
+            }
+            else {
+                if(predicted_c == '-') c_matrix[1][1]++;
+                else c_matrix[0][1]++;
+            }
+        }
+        std::cout << "Accuracy: " << accuracy << std::endl;
+        //std::cout << "Hit-or-miss: " << hit_or_miss << std::endl;
+
+        std::cout << "Confusion matrix:" << std::endl;
+        std::cout << c_matrix[0][0] << " " << c_matrix[0][1] << std::endl;
+        std::cout << c_matrix[1][0] << " " << c_matrix[1][1] << std::endl;
+        
+        std::cout << std::endl;
+        
+        std::cout << ">>> Test chr19_0_relaxed_simple done. <<<" << std::endl;
+    }
+
 
 private:
     template<int N>
@@ -211,6 +332,8 @@ int main() {
 //    Test::test_backward();
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
-      Test::test_mm39_relaxed_simple();
+    //   Test::test_mm39_relaxed_simple_without_baum_welch_algorithm();
+    // Test::test_mm39_relaxed_simple();
+    Test::test_chr19_0_relaxed_simple();
     return 0;
 }

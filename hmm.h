@@ -40,7 +40,8 @@ public:
         // create_default_emission_to_idx_map();
         // create_default_state_to_idx_map();
         estimate_initial_probabilities(states, emissions);
-        baum_welch_algorithm(emissions, batch_size, n_iter);
+        print_transition_probabilities_and__emission_probabilities();
+        // baum_welch_algorithm(emissions, batch_size, n_iter);
     }
 
     std::string predict(const std::string& data) {
@@ -328,6 +329,13 @@ private:
     }
 
     void print_transition_probabilities_and__emission_probabilities() {
+        std::cout << "_states_probabilities" << std::endl;
+        for (int t_alpha = 0; t_alpha < N; t_alpha++) {
+            std::cout << _states_probabilities[t_alpha] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "_states_probabilities end" << std::endl << std::endl;
+
         std::cout << "_transition_probabilities" << std::endl;
         for (int t_alpha = 0; t_alpha < N; t_alpha++) {
             for (int t_transition = 0; t_transition < N; t_transition++)
@@ -367,19 +375,20 @@ private:
         std::string data = "";
 
         while(batch_index < number_of_batches) {
-            std::cout << "Batch: " << batch_index << std::endl;
+            // std::cout << "Batch: " << batch_index << std::endl;
             if(batch_index == number_of_batches - 1) data_length = all_data_length % batch_size;
             int *V = new int[data_length];
-            for (int i = 0; i < data_length; i++) V[i + batch_index * batch_size] = transformed_data[i + batch_index * batch_size];
+            //for (int i = 0; i < data_length; i++) V[i + batch_index * batch_size] = transformed_data[i + batch_index * batch_size];
             
             size_t  start_index = batch_index * batch_size;
             size_t  size = data_length;
 
-            std::cout << "start_index: " << start_index << std::endl;
-            std::cout << "size: " << size << std::endl;
+            // std::cout << "start_index: " << start_index << std::endl;
+            // std::cout << "size: " << size << std::endl;
 
-            data = input_data.substr(0, 100);
-            std::cout << "data: " << data << std::endl;
+            data = input_data.substr(start_index, size);
+            for (int i = 0; i < data_length; i++) V[i] = emission_to_idx[input_data[i]];
+            // std::cout << "data: " << data << std::endl;
 
             for (int n = 0; n < n_iter; n++) {
                 double** alpha = forward(data);
@@ -514,12 +523,12 @@ private:
                 free(beta);
                 free(xi);
             }
-            print_transition_probabilities_and__emission_probabilities();
+            // print_transition_probabilities_and__emission_probabilities();
             batch_index++;
         }
         
-        
-        // print_transition_probabilities_and__emission_probabilities();
+        std::cout << std::endl << "KRAJ" << std::endl << std::endl;
+        print_transition_probabilities_and__emission_probabilities();
         free(transformed_data);
 
     }

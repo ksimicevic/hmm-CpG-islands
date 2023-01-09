@@ -184,6 +184,30 @@ public:
         std::cout << ">>> Test mm39_relaxed_simple done. <<<" << std::endl;
     }
 
+    static void test_simple(const std::string& train_seq_path,const std::string& train_path,
+                const std::string& test_seq_path, const std::string& test_path) {
+        std::cout << ">>> Test simple start. <<<" << std::endl;
+
+        std::string train_sequence, train_emissions, test_sequence, test_emissions;
+        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
+        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
+
+        hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
+        hmm.fit(train_sequence, train_emissions, 1);
+        hmm.print_transition_probabilities_and__emission_probabilities();
+
+        auto predicted_emissions = hmm.predict(test_sequence);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+        std::cout << "Accuracy: " << accuracy << std::endl;
+
+        std::cout << predicted_emissions << std::endl;
+
+        std::cout << ">>> Test simple done. <<<" << std::endl;
+    }
+
 private:
     template<int N>
     static bool is_equal_arrays(double a[N], double b[N]) {
@@ -211,6 +235,8 @@ int main() {
 //    Test::test_backward();
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
-      Test::test_mm39_relaxed_simple();
+//    Test::test_mm39_relaxed_simple();
+    Test::test_simple("..\\data\\even\\sequences\\chr19_0.txt", "..\\data\\even\\islands\\chr19_0.txt",
+      "..\\data\\even\\sequences\\chr19_3.txt", "..\\data\\even\\islands\\chr19_3.txt");
     return 0;
 }

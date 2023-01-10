@@ -235,31 +235,30 @@ private:
         for (int i = 0; i < data_length; i++) V[i] = _emission_to_idx[data[i]];
 
         int T = data_length;
-        int M = N;
 
-        double omega[T][M];
+        double omega[T][N];
         for (int i = 0; i < T; i++){
-            for (int j = 0; j < M; j++){
+            for (int j = 0; j < N; j++){
                 omega[i][j] = 0.0;
             }
         }
 
-        int prev[T-1][M];
+        int prev[T-1][N];
         for (int i = 0; i < T; i++){
-            for (int j = 0; j < M; j++){
+            for (int j = 0; j < N; j++){
                 prev[i][j] = 0;
             }
         }
 
-        for (int j = 0; j < M; j++) {
+        for (int j = 0; j < N; j++) {
             omega[0][j] = log(_states_probabilities[j] * _emission_probabilities[j][V[0]]);
         }
 
         for (int t = 1; t < T; t++){
-            for (int j = 0; j < M; j++){
-                double probability[M];
+            for (int j = 0; j < N; j++){
+                double probability[N];
                 double *omega_row = omega[t-1];
-                for(int p = 0; p < M; p++){
+                for(int p = 0; p < N; p++){
                     probability[p] = omega_row[p] + log(_transition_probabilities[p][j]) + log(_emission_probabilities[j][V[t]]);
                 }
             
@@ -275,9 +274,9 @@ private:
             S[i] = 0;
         }
     
-        double temp[M];
+        double temp[N];
         double *omega_row = omega[T-1];
-        for (int p = 0; p < M; p++){
+        for (int p = 0; p < N; p++){
             temp[p] = omega_row[p];
         }
     

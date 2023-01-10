@@ -196,7 +196,7 @@ public:
         hmm.fit(train_sequence, train_emissions, 1);
         hmm.print_transition_probabilities_and__emission_probabilities();
 
-        auto predicted_emissions = hmm.predict(test_sequence);
+        auto predicted_emissions = hmm.predict(test_emissions);
 
         std::string hit_or_miss;
         double accuracy;

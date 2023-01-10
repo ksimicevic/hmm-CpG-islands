@@ -232,7 +232,7 @@ private:
         int data_length = data.length();
         int V[data_length];
 
-        for (int i = 0; i < data_length; i++) V[i] = emission_to_idx[data[i]];
+        for (int i = 0; i < data_length; i++) V[i] = _emission_to_idx[data[i]];
 
         int T = data_length;
         int M = 2;

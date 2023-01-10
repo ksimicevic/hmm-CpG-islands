@@ -220,69 +220,87 @@ private:
         return beta;
     }
 
+    int argmax(double* arr, int size){
+        auto max_element = std::max_element(arr, arr+size);
+        return std::distance(arr, max_element);
+    }
+
     std::string viterbi_algorithm(const std::string& data) {
         std::unordered_map<int, char> idx_to_state;
         for (auto& it: _state_to_idx) idx_to_state[it.second] = it.first;
 
-        std::vector<int> DNA;
-        for (char c: data) DNA.push_back(_state_to_idx[c]);
-        const int data_length = DNA.size();
+        int data_length = data.length();
+        int V[data_length];
 
-        const int transition_length = sizeof _transition_probabilities / sizeof _transition_probabilities[0];
+        for (int i = 0; i < data_length; i++) V[i] = emission_to_idx[data[i]];
 
-        double omega[data_length][transition_length];
-        for (int i = 0; i < data_length; i++) {
-            for (int j = 0; j < transition_length; j++)
-                omega[i][j] = 0;
+        int T = data_length;
+        int M = 2;
+
+        double omega[T][M];
+        for (int i = 0; i < T; i++){
+            for (int j = 0; j < M; j++){
+                omega[i][j] = 0.0;
+            }
         }
 
-        for (int i = 0; i < transition_length; i++)
-            omega[0][i] = log(_states_probabilities[i] * _emission_probabilities[i][DNA[0]]);
+        int prev[T-1][M];
+        for (int i = 0; i < T; i++){
+            for (int j = 0; j < M; j++){
+                prev[i][j] = 0;
+            }
+        }
 
-        int prev[data_length - 1][transition_length];
+        for (int j = 0; j < M; j++) {
+            omega[0][j] = log(_states_probabilities[j] * _emission_probabilities[j][V[0]]);
+        }
 
-        for (int t = 1; t < data_length; t++) {
-            for (int j = 0; j < transition_length; j++) {
-                double max = -INFINITY;
-                int max_idx = 0;
-                for (int i = 0; i < transition_length; i++) {
-                    double probability = omega[t - 1][i] + log(_transition_probabilities[i][j]) +
-                                         log(_emission_probabilities[j][DNA[t]]);
-                    if (probability > max) {
-                        max = probability;
-                        max_idx = i;
-                    }
+        for (int t = 1; t < T; t++){
+            for (int j = 0; j < M; j++){
+                double probability[M];
+                double *omega_row = omega[t-1];
+                for(int p = 0; p < M; p++){
+                    probability[p] = omega_row[p] + log(_transition_probabilities[p][j]) + log(_emission_probabilities[j][V[t]]);
                 }
-                omega[t][j] = max;
-                prev[t - 1][j] = max_idx;
-
+            
+                int size_of_probability = sizeof(probability) / sizeof(probability[0]);
+                int argMax = argmax(probability, size_of_probability);
+                prev[t-1][j] = argMax;
+                omega[t][j] = probability[argMax];
             }
         }
 
-        double max = -INFINITY;
-        int max_idx = 0;
-        for (int i = 0; i < transition_length; i++) {
-            if (omega[data_length - 1][i] > max) {
-                max = omega[data_length - 1][i];
-                max_idx = i;
-            }
+        int S[T];
+        for (int i = 0; i < T; i++){
+            S[i] = 0;
         }
-        int last_state = max_idx;
-
-        int S[data_length];
+    
+        double temp[M];
+        double *omega_row = omega[T-1];
+        for (int p = 0; p < M; p++){
+            temp[p] = omega_row[p];
+        }
+    
+        int size_of_temp = sizeof(temp) / sizeof(temp[0]);
+        int argMax = argmax(temp, size_of_temp);
+    
+        int last_state = argMax;
+    
         S[0] = last_state;
-
+    
         int backtrack_index = 1;
-        for (int i = data_length - 2; i >= 0; i--) {
+        for (int i = T - 2; i >= 0; i--){
             S[backtrack_index] = prev[i][last_state];
             last_state = prev[i][last_state];
             backtrack_index++;
         }
 
+    
         std::string result;
-        for (int i = data_length - 1; i >= 0; i--)
+        for (int i = data_length - 1; i >= 0; i--){
             result += idx_to_state[S[i]];
-
+        }
+        
         return result;
     }
 

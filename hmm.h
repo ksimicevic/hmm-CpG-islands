@@ -235,7 +235,7 @@ private:
         for (int i = 0; i < data_length; i++) V[i] = _emission_to_idx[data[i]];
 
         int T = data_length;
-        int M = 2;
+        int M = N;
 
         double omega[T][M];
         for (int i = 0; i < T; i++){

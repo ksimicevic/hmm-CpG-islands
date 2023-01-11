@@ -205,6 +205,8 @@ public:
 
         std::cout << predicted_emissions << std::endl;
 
+        std::cout << from_str_to_islands(predicted_emissions) << std::endl;
+
         std::cout << ">>> Test simple done. <<<" << std::endl;
     }
 

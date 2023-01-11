@@ -8,7 +8,6 @@
 #include <array>
 #include <fstream>
 
-namespace {
 
 std::vector<std::pair<int,int>> load_island(const std::string& islands_path) {
     std::ifstream islands_file(islands_path);
@@ -75,7 +74,30 @@ std::string from_islands_to_str(
     return states;
 }
 
-} // anonymous namespace
+std::string from_str_to_islands(const std::string& str, bool simple = true) {
+    std::string ret;
+
+    if (simple) {
+        for (size_t pos = 0; pos != std::string::npos && pos < str.length(); pos++) {
+            auto start = str.find('+', pos);
+            if (start != std::string::npos) {
+                auto end = str.find('-', start + 1);
+                if (end == std::string::npos)
+                    end = str.length() - 1;
+
+                ret.append(std::to_string(start))
+                        .append(",")
+                        .append(std::to_string(end))
+                        .append("\n");
+                pos = end;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return ret;
+}
 
 std::pair<std::string, std::string> parse_data(
         const std::string& islands_path, const std::string& sequence_path, bool simple = true

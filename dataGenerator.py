@@ -5,10 +5,10 @@ NAME = "chr19"
 PATH_TO_SEQUENCE = "big-sequences/" + "chr19.fa"
 PATH_TO_ISLANDS = "data/strict-examples/" + "chr19_islands.csv"
 
-PATH_TO_END_RES = "data/even/sequences/"
-PATH_TO_END_ISLANDS = "data/even/islands/"
+PATH_TO_END_RES = "data/even-5/sequences/"
+PATH_TO_END_ISLANDS = "data/even-5/islands/"
 
-NUM_OF_ISLANDS = 3
+NUM_OF_ISLANDS = 5
 
 file = open(PATH_TO_SEQUENCE, 'r')
 seq = ''.join([s.strip().capitalize() for s in file.read()])
@@ -21,6 +21,9 @@ for i in range(0, len(islands), NUM_OF_ISLANDS):
     indexes = []
 
     for j in range(0, NUM_OF_ISLANDS):
+        if i + j >= len(islands) - 1:
+            break
+
         island = islands[i + j]
 
         begin, end = int(island[0]), int(island[1])

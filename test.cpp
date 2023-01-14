@@ -250,8 +250,8 @@ int main() {
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
 //    Test::test_mm39_relaxed_simple();
-    Test::test_simple(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
-      R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
+    Test::test_simple(R"(..\data\even-5\sequences\chr19_0.txt)", R"(..\data\even-5\islands\chr19_0.txt)",
+      R"(..\data\even-5\sequences\chr19_15.txt)", R"(..\data\even-5\islands\chr19_15.txt)");
 //    Test::test_complex(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
 //    R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
     return 0;

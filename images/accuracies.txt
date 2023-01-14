@@ -1,0 +1,6 @@
+[three-even-islands]
+chr19_3_simple 0.674058
+chr19_3_complex 0.685976
+
+[five-even-islands]
+chr19_15_simple 0.769085

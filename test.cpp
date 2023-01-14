@@ -7,20 +7,6 @@
 class Test {
 
 public:
-//    static void test_create_emission_to_idx_map() {
-//        const auto islands_path = "data\\relaxed-examples\\mm39_1_islands.txt";
-//        const auto sequence_path = "data\\relaxed-examples\\mm39_1.txt";
-//
-//        const int N = 2;
-//        const int M = 4;
-//
-//        std::string sequence = load_sequence(sequence_path);
-//
-//        hidden_markov_chain<N, M>::create_emission_to_idx_map(sequence);
-//
-//        std::cout << ">>> Test create emission to idx map done. <<<" << std::endl;
-//    }
-
     static void test_forward() {
         std::cout << ">>> Test forward start. <<<" << std::endl;
         const std::string states = "FBBFFBBFBFFBFFB";
@@ -160,11 +146,11 @@ public:
 
     static void test_mm39_relaxed_simple() {
         std::cout << ">>> Test mm39_relaxed_simple start. <<<" << std::endl;
-        const std::string train_seq_path = "..\\data\\sequences\\mm39_1.txt";
-        const std::string train_path = "..\\data\\relaxed-examples\\mm39_1_islands.txt";
+        const std::string train_seq_path = R"(..\data\sequences\mm39_1.txt)";
+        const std::string train_path = R"(..\data\relaxed-examples\mm39_1_islands.txt)";
 
-        const std::string test_seq_path = "..\\data\\sequences\\mm39_2.txt";
-        const std::string test_path = "..\\data\\relaxed-examples\\mm39_2_islands.txt";
+        const std::string test_seq_path = R"(..\data\sequences\mm39_2.txt)";
+        const std::string test_path = R"(..\data\relaxed-examples\mm39_2_islands.txt)";
 
         std::string train_sequence, train_emissions, test_sequence, test_emissions;
         std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
@@ -177,7 +163,7 @@ public:
 
         std::string hit_or_miss;
         double accuracy;
-        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+        std::tie(accuracy, hit_or_miss) = evaluate(test_sequence, predicted_emissions);
         std::cout << "Accuracy: " << accuracy << std::endl;
         //std::cout << "Hit-or-miss: " << hit_or_miss << std::endl;
         
@@ -194,13 +180,13 @@ public:
 
         hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
         hmm.fit(train_sequence, train_emissions, 1);
-        hmm.print_transition_probabilities_and__emission_probabilities();
+        hmm.print_transition_probabilities_and_emission_probabilities();
 
         auto predicted_emissions = hmm.predict(test_emissions);
 
         std::string hit_or_miss;
         double accuracy;
-        std::tie(accuracy, hit_or_miss) = hmm.evaluate(test_sequence, predicted_emissions);
+        std::tie(accuracy, hit_or_miss) = evaluate(test_sequence, predicted_emissions);
         std::cout << "Accuracy: " << accuracy << std::endl;
 
         std::cout << predicted_emissions << std::endl;
@@ -208,6 +194,32 @@ public:
         std::cout << from_str_to_islands(predicted_emissions) << std::endl;
 
         std::cout << ">>> Test simple done. <<<" << std::endl;
+    }
+
+    static void test_complex(const std::string& train_seq_path,const std::string& train_path,
+                             const std::string& test_seq_path, const std::string& test_path) {
+        std::cout << ">>> Test complex start. <<<" << std::endl;
+
+        std::string train_sequence, train_emissions, test_sequence, test_emissions;
+        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, false);
+        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, false);
+
+        hidden_markov_chain<8, 4> hmm({'a', 'c', 'g', 't', 'A', 'C', 'G', 'T'}, {'A', 'C', 'G', 'T'});
+        hmm.fit(train_sequence, train_emissions, 1);
+        hmm.print_transition_probabilities_and_emission_probabilities();
+
+        auto predicted_emissions = hmm.predict(test_emissions);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = evaluate(test_sequence, predicted_emissions);
+        std::cout << "Accuracy: " << accuracy << std::endl;
+
+        std::cout << predicted_emissions << std::endl;
+
+        std::cout << from_str_to_islands(predicted_emissions, false) << std::endl;
+
+        std::cout << ">>> Test complex done. <<<" << std::endl;
     }
 
 private:
@@ -238,7 +250,9 @@ int main() {
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
 //    Test::test_mm39_relaxed_simple();
-    Test::test_simple("..\\data\\even\\sequences\\chr19_0.txt", "..\\data\\even\\islands\\chr19_0.txt",
-      "..\\data\\even\\sequences\\chr19_3.txt", "..\\data\\even\\islands\\chr19_3.txt");
+    Test::test_simple(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
+      R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
+//    Test::test_complex(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
+//    R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
     return 0;
 }

@@ -8,7 +8,6 @@
 #include <array>
 #include <fstream>
 
-
 std::vector<std::pair<int,int>> load_island(const std::string& islands_path) {
     std::ifstream islands_file(islands_path);
     if (!islands_file.good()) {
@@ -69,7 +68,7 @@ std::string from_islands_to_str(
     if (simple)
         states.append(emissions.length() - current_idx, '-');
     else
-        std::transform(emissions.begin() + current_idx, emissions.end(), states.begin() + current_idx,
+        std::transform(emissions.begin() + current_idx, emissions.end(), std::back_inserter(states),
                        [](auto c) { return std::tolower(c); });
     return states;
 }
@@ -92,6 +91,20 @@ std::string from_str_to_islands(const std::string& str, bool simple = true) {
                 pos = end;
             } else {
                 break;
+            }
+        }
+    } else {
+        for (size_t pos = 0; pos != std::string::npos && pos < str.length(); pos++) {
+            if (std::isupper(str.at(pos))){ // start of an island
+                auto start = pos;
+                while (std::isupper(str.at(pos)) && pos < str.length() - 1) pos++;
+                auto end = pos;
+
+                ret.append(std::to_string(start))
+                        .append(",")
+                        .append(std::to_string(end))
+                        .append("\n");
+                pos = end;
             }
         }
     }

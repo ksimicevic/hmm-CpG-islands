@@ -9,6 +9,32 @@
 #include <fstream>
 #include <set>
 
+int argmax(double* arr, int size) {
+    auto max_element = std::max_element(arr, arr + size);
+    return std::distance(arr, max_element);
+}
+
+std::pair<double, std::string> evaluate(const std::string& emissions, const std::string& predicted) {
+    if (emissions.length() != predicted.length()) {
+        std::cerr << "True emissions and predicted emissions differ in length!" << std::endl;
+        return {{},{}};
+    }
+
+    int correct = 0;
+    std::string hit_or_miss;
+    for (auto i = 0; i < emissions.length(); ++i) {
+        if (emissions[i] == predicted[i]) {
+            correct++;
+            hit_or_miss.append("+");
+        } else {
+            hit_or_miss.append("-");
+        }
+    }
+
+    return {correct / (emissions.length() * 1.0), hit_or_miss};
+}
+
+
 // forward declaration
 class Test;
 
@@ -43,26 +69,6 @@ public:
 
     std::string predict(const std::string& data) {
         return viterbi_algorithm(data);
-    }
-
-   std::pair<double, std::string> evaluate(const std::string& emissions, const std::string& predicted) {
-        if (emissions.length() != predicted.length()) {
-            std::cerr << "True emissions and predicted emissions differ in length!" << std::endl;
-            return {{},{}};
-        }
-
-        int correct = 0;
-        std::string hit_or_miss;
-        for (auto i = 0; i < emissions.length(); ++i) {
-            if (emissions[i] == predicted[i]) {
-                correct++;
-                hit_or_miss.append("+");
-            } else {
-                hit_or_miss.append("-");
-            }
-        }
-
-        return {correct / (emissions.length() * 1.0), hit_or_miss};
     }
 
 private:
@@ -128,6 +134,17 @@ private:
             for (auto j = 0; j < _states.size(); ++j) _transition_probabilities[j][i] /= col_sum;
         }
 
+        // deal with 0 probabilities
+        double epsilon = 0.01;
+        for (auto i = 0; i < N; ++i) {
+            for (auto j = 0; j < N; ++j) {
+                if ( _transition_probabilities[i][j] == 0)
+                    _transition_probabilities[i][j] = epsilon;
+
+                // they aren't correcting for this so aren't we
+            }
+        }
+
         // INITIAL EMISSIONS PROBABILITIES
         std::unordered_map<char, std::vector<int>> emission_freqs;
         std::unordered_map<char, int> state_to_idx;
@@ -146,8 +163,7 @@ private:
 
         for (auto i = 0; i < _states.size(); ++i) {
             for (auto j = 0; j < _symbols.size(); ++j)
-                _emission_probabilities[i][j] =
-                        (double) emission_freqs[_symbols[j]][i] / (double) states_freqs[_states[i]];
+                _emission_probabilities[i][j] = (double) emission_freqs[_symbols[j]][i] / (double) states_freqs[_states[i]];
         }
     }
 
@@ -158,7 +174,7 @@ private:
         for (int i = 0; i < data_length; i++) {
             alpha[i] = new double[N];
             for (int j = 0; j < N; j++) {
-                i == 0 ? alpha[0][j] = -log(_states_probabilities[j]) - log(_emission_probabilities[j][0])
+                i == 0 ? alpha[0][j] = - log(_states_probabilities[j]) - log(_emission_probabilities[j][0])
                     : alpha[i][j] = 0;
             }
         }
@@ -171,7 +187,7 @@ private:
                 double result = 0;
 
                 for (int k = 0; k < N; k++)
-                    result += -log(alpha[i - 1][k]) - log(_transition_probabilities[k][j]) - log(_emission_probabilities[j][V[i]]);
+                    result += - log(alpha[i - 1][k]) - log(_transition_probabilities[k][j]) - log(_emission_probabilities[j][V[i]]);
 
                 alpha[i][j] = result;
             }
@@ -205,7 +221,7 @@ private:
                 double result = 0;
 
                 for (int k = 0; k < N; k++)
-                    result += -log(beta[i + 1][k]) - log(_emission_probabilities[k][V[i + 1]]) - log(_transition_probabilities[j][k]);
+                    result += - log(beta[i + 1][k]) - log(_transition_probabilities[j][k]) - log(_emission_probabilities[k][V[i + 1]]);
 
                 beta[i][j] = result;
             }
@@ -218,11 +234,6 @@ private:
         }
 
         return beta;
-    }
-
-    int argmax(double* arr, int size){
-        auto max_element = std::max_element(arr, arr+size);
-        return std::distance(arr, max_element);
     }
 
     std::string viterbi_algorithm(const std::string& data) {
@@ -303,7 +314,7 @@ private:
         return result;
     }
 
-    void print_transition_probabilities_and__emission_probabilities() {
+    void print_transition_probabilities_and_emission_probabilities() {
         std::cout << "_transition_probabilities" << std::endl;
         for (int t_alpha = 0; t_alpha < N; t_alpha++) {
             for (int t_transition = 0; t_transition < N; t_transition++)
@@ -378,11 +389,8 @@ private:
 
                     for (int vpom = 0; vpom < N; vpom++)
                         xi[i][vpom][t] = numerator[vpom] / denominator;
-                    // std::cout << xi[i][vpom][t] << " ";
-
                 }
             }
-
 
             double** gamma = new double* [N]; // np.sum(xi, axis=1)
             double* gamma_sum_by_1_axis = new double[N]; // np.sum(gamma, axis=1).reshape((-1, 1))

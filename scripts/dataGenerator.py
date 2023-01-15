@@ -5,11 +5,11 @@ NAME = "chr19"
 PATH_TO_SEQUENCE = "big-sequences/" + "chr19.fa"
 PATH_TO_ISLANDS = "data/strict-examples/" + "chr19_islands.csv"
 
-PATH_TO_END_RES = "data/seven-twice-nonislands/sequences/"
-PATH_TO_END_ISLANDS = "data/seven-twice-nonislands/islands/"
+PATH_TO_END_RES = "data/seven-thrice-nonislands/sequences/"
+PATH_TO_END_ISLANDS = "data/seven-thrice-nonislands/islands/"
 
 NUM_OF_ISLANDS = 7
-NON_ISLAND_LEN_MULTIPLIER = 2
+NON_ISLAND_LEN_MULTIPLIER = 3
 
 file = open(PATH_TO_SEQUENCE, 'r')
 seq = ''.join([s.strip().capitalize() for s in file.read()])

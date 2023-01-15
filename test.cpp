@@ -18,7 +18,7 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        double ** alpha = hmm.forward(emissions);
+        double** alpha = hmm.forward(emissions);
 
         std::cout << "alpha" << std::endl;
         for(int i = 0; i < emissions.length(); i++) {
@@ -28,6 +28,7 @@ public:
             std::cout << std::endl;
         }
 
+        delete[] alpha;
         std::cout << ">>> Test forward done. <<<" << std::endl;
     }
 
@@ -42,7 +43,7 @@ public:
         hidden_markov_chain<N, M> hmm({'F', 'B'}, {'1', '2', '3', '4', '5', '6'});
         hmm.estimate_initial_probabilities(states, emissions);
 
-        double ** beta = hmm.backward(emissions);
+        double** beta = hmm.backward(emissions);
 
         std::cout << "beta" << std::endl;
         for(int i = 0; i < emissions.length(); i++) {
@@ -52,6 +53,7 @@ public:
             std::cout << std::endl;
         }
 
+        delete[] beta;
         std::cout << ">>> Test backward done. <<<" << std::endl;
     }
 
@@ -144,32 +146,6 @@ public:
         std::cout << ">>> Test viterbi done. <<<" << std::endl;
     }
 
-    static void test_mm39_relaxed_simple() {
-        std::cout << ">>> Test mm39_relaxed_simple start. <<<" << std::endl;
-        const std::string train_seq_path = R"(..\data\sequences\mm39_1.txt)";
-        const std::string train_path = R"(..\data\relaxed-examples\mm39_1_islands.txt)";
-
-        const std::string test_seq_path = R"(..\data\sequences\mm39_2.txt)";
-        const std::string test_path = R"(..\data\relaxed-examples\mm39_2_islands.txt)";
-
-        std::string train_sequence, train_emissions, test_sequence, test_emissions;
-        std::tie(train_sequence, train_emissions) = parse_data(train_path, train_seq_path, true);
-        std::tie(test_sequence, test_emissions) = parse_data(test_path, test_seq_path, true);
-
-        hidden_markov_chain<2, 4> hmm({'+', '-'}, {'A', 'C', 'G', 'T'});
-        hmm.fit(train_sequence, train_emissions, 1);
-
-        auto predicted_emissions = hmm.predict(test_sequence);
-
-        std::string hit_or_miss;
-        double accuracy;
-        std::tie(accuracy, hit_or_miss) = evaluate(test_sequence, predicted_emissions);
-        std::cout << "Accuracy: " << accuracy << std::endl;
-        //std::cout << "Hit-or-miss: " << hit_or_miss << std::endl;
-        
-        std::cout << ">>> Test mm39_relaxed_simple done. <<<" << std::endl;
-    }
-
     static void test_simple(const std::string& train_seq_path,const std::string& train_path,
                 const std::string& test_seq_path, const std::string& test_path) {
         std::cout << ">>> Test simple start. <<<" << std::endl;
@@ -222,6 +198,28 @@ public:
         std::cout << ">>> Test complex done. <<<" << std::endl;
     }
 
+    static void convert_from_str_to_islands(const std::string& island_path, bool simple=true) {
+        auto sequence = load_raw(island_path);
+
+        auto islands = from_str_to_islands(sequence, simple);
+        std::cout << islands << std::endl;
+    }
+
+    static void evaluate_islands(const std::string& seq_path, const std::string& true_path,
+                                 const std::string& predict_path, bool simple=true) {
+        // true observations are always saved as indexes, don't tell me twice it's a bad design
+        std::string sequence, true_obs;
+        std::tie(sequence, true_obs) = parse_data(true_path, seq_path);
+
+        std::string predicted_obs = load_raw(predict_path);
+
+        std::string hit_or_miss;
+        double accuracy;
+        std::tie(accuracy, hit_or_miss) = evaluate(true_obs, predicted_obs, simple);
+
+        std::cout << "Accuracy: " << accuracy << std::endl;
+    }
+
 private:
     template<int N>
     static bool is_equal_arrays(double a[N], double b[N]) {
@@ -234,7 +232,7 @@ private:
     template<int N, int M>
     static bool is_equal_matrices(double a[N][M], double b[N][M]) {
         for (auto i = 0; i < N; ++i) {
-            if (!is_equal_arrays<M>(a[i], b[i])) return  false;
+            if (!is_equal_arrays<M>(a[i], b[i])) return false;
         }
 
         return true;
@@ -250,8 +248,11 @@ int main() {
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
 //    Test::test_mm39_relaxed_simple();
-    Test::test_simple(R"(..\data\even-5\sequences\chr19_0.txt)", R"(..\data\even-5\islands\chr19_0.txt)",
-      R"(..\data\even-5\sequences\chr19_15.txt)", R"(..\data\even-5\islands\chr19_15.txt)");
+    Test::evaluate_islands(R"(..\data\three-even-islands\sequences\chr19_3.txt)", R"(..\data\three-even-islands\islands\chr19_3.txt)",
+           R"(..\data\three-even-islands\predicted\chr19_3_viterbi.txt)", false);
+//    Test::convert_from_str_to_islands(R"(..\data\three-even-islands\predicted\chr19_3_viterbi.txt)", false);
+//    Test::test_complex(R"(..\data\seven-even-islands\sequences\chr19_0.txt)", R"(..\data\seven-even-islands\islands\chr19_0.txt)",
+//      R"(..\data\three-even-islands\sequences\chr19_3.txt)", R"(..\data\three-even-islands\islands\chr19_3.txt)");
 //    Test::test_complex(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
 //    R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
     return 0;

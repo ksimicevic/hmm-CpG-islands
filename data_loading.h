@@ -8,6 +8,20 @@
 #include <array>
 #include <fstream>
 
+std::string load_raw(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.good()) {
+        std::cerr << "Path " << path << " is not valid" << std::endl;
+        return {};
+    }
+
+    std::string sequence, line;
+    while (std::getline(file, line))
+        sequence.append(line);
+
+    return sequence;
+}
+
 std::vector<std::pair<int,int>> load_island(const std::string& islands_path) {
     std::ifstream islands_file(islands_path);
     if (!islands_file.good()) {

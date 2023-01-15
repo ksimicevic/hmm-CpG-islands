@@ -5,10 +5,11 @@ NAME = "chr19"
 PATH_TO_SEQUENCE = "big-sequences/" + "chr19.fa"
 PATH_TO_ISLANDS = "data/strict-examples/" + "chr19_islands.csv"
 
-PATH_TO_END_RES = "data/even-5/sequences/"
-PATH_TO_END_ISLANDS = "data/even-5/islands/"
+PATH_TO_END_RES = "data/seven-twice-nonislands/sequences/"
+PATH_TO_END_ISLANDS = "data/seven-twice-nonislands/islands/"
 
-NUM_OF_ISLANDS = 5
+NUM_OF_ISLANDS = 7
+NON_ISLAND_LEN_MULTIPLIER = 2
 
 file = open(PATH_TO_SEQUENCE, 'r')
 seq = ''.join([s.strip().capitalize() for s in file.read()])
@@ -32,7 +33,7 @@ for i in range(0, len(islands), NUM_OF_ISLANDS):
         begin_perc = random.uniform(0, 1)
         end_perc = 1 - begin_perc
 
-        begin_seq, end_seq = begin - int(begin_perc * island_len), end + int(end_perc * island_len)
+        begin_seq, end_seq = begin - int(begin_perc * NON_ISLAND_LEN_MULTIPLIER * island_len), end + int(end_perc * NON_ISLAND_LEN_MULTIPLIER * island_len)
 
         indexes.append((begin - begin_seq + len(sequence), end - begin_seq + len(sequence)))
         sequence += seq[begin_seq: end_seq]

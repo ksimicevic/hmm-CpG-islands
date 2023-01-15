@@ -14,7 +14,7 @@ int argmax(double* arr, int size) {
     return std::distance(arr, max_element);
 }
 
-std::pair<double, std::string> evaluate(const std::string& emissions, const std::string& predicted) {
+std::pair<double, std::string> evaluate(const std::string& emissions, const std::string& predicted, bool simple=true) {
     if (emissions.length() != predicted.length()) {
         std::cerr << "True emissions and predicted emissions differ in length!" << std::endl;
         return {{},{}};
@@ -23,7 +23,8 @@ std::pair<double, std::string> evaluate(const std::string& emissions, const std:
     int correct = 0;
     std::string hit_or_miss;
     for (auto i = 0; i < emissions.length(); ++i) {
-        if (emissions[i] == predicted[i]) {
+        if (simple ? emissions[i] == predicted[i]
+                : (std::isupper(emissions[i]) && std::isupper(predicted[i])) || (std::islower(emissions[i]) && std::islower(predicted[i]))) {
             correct++;
             hit_or_miss.append("+");
         } else {
@@ -64,6 +65,7 @@ public:
 
     void fit(const std::string& states, const std::string& emissions, int n_iter) {
         estimate_initial_probabilities(states, emissions);
+        print_transition_probabilities_and_emission_probabilities();
         baum_welch_algorithm(emissions, n_iter);
     }
 
@@ -237,6 +239,11 @@ private:
     }
 
     std::string viterbi_algorithm(const std::string& data) {
+//        _transition_probabilities[0][0] = 0.95;
+//        _transition_probabilities[1][1] = 0.95;
+//        _transition_probabilities[0][1] = 0.05;
+//        _transition_probabilities[1][0] = 0.05;
+
         std::unordered_map<int, char> idx_to_state;
         for (auto& it: _state_to_idx) idx_to_state[it.second] = it.first;
 
@@ -312,25 +319,6 @@ private:
         }
         
         return result;
-    }
-
-    void print_transition_probabilities_and_emission_probabilities() {
-        std::cout << "_transition_probabilities" << std::endl;
-        for (int t_alpha = 0; t_alpha < N; t_alpha++) {
-            for (int t_transition = 0; t_transition < N; t_transition++)
-                std::cout << _transition_probabilities[t_alpha][t_transition] << " ";
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << "_transition_probabilities end" << std::endl << std::endl;
-
-        std::cout << "_emission_probabilities" << std::endl;
-        for (int vpom1 = 0; vpom1 < N; vpom1++) {
-            for (int vpom2 = 0; vpom2 < M; vpom2++)
-                std::cout << _emission_probabilities[vpom1][vpom2] << " ";
-            std::cout << std::endl;
-        }
-        std::cout << "_emission_probabilities end" << std::endl << std::endl;
     }
 
     void baum_welch_algorithm(const std::string& data, int n_iter) {
@@ -457,11 +445,14 @@ private:
             delete[] gamma;
 
         }
+//        print_transition_probabilities_and_emission_probabilities();
+    }
 
+    void print_transition_probabilities_and_emission_probabilities() {
         std::cout << "_transition_probabilities" << std::endl;
         for (int t_alpha = 0; t_alpha < N; t_alpha++) {
             for (int t_transition = 0; t_transition < N; t_transition++)
-                std::cout << _transition_probabilities[t_alpha][t_transition] << " ";
+                std::cout << _transition_probabilities[t_alpha][t_transition] << ", ";
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -470,10 +461,9 @@ private:
         std::cout << "_emission_probabilities" << std::endl;
         for (int vpom1 = 0; vpom1 < N; vpom1++) {
             for (int vpom2 = 0; vpom2 < M; vpom2++)
-                std::cout << _emission_probabilities[vpom1][vpom2] << " ";
+                std::cout << _emission_probabilities[vpom1][vpom2] << ", ";
             std::cout << std::endl;
         }
-        std::cout << "_emission_probabilities end" << std::endl;
-
+        std::cout << "_emission_probabilities end" << std::endl << std::endl;
     }
 };

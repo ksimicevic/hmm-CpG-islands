@@ -239,11 +239,6 @@ private:
     }
 
     std::string viterbi_algorithm(const std::string& data) {
-//        _transition_probabilities[0][0] = 0.95;
-//        _transition_probabilities[1][1] = 0.95;
-//        _transition_probabilities[0][1] = 0.05;
-//        _transition_probabilities[1][0] = 0.05;
-
         std::unordered_map<int, char> idx_to_state;
         for (auto& it: _state_to_idx) idx_to_state[it.second] = it.first;
 

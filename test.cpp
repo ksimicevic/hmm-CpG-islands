@@ -146,7 +146,7 @@ public:
         std::cout << ">>> Test viterbi done. <<<" << std::endl;
     }
 
-    static void test_simple(const std::string& train_seq_path,const std::string& train_path,
+    static double test_simple(const std::string& train_seq_path,const std::string& train_path,
                 const std::string& test_seq_path, const std::string& test_path) {
         std::cout << ">>> Test simple start. <<<" << std::endl;
 
@@ -170,6 +170,8 @@ public:
         std::cout << from_str_to_islands(predicted_emissions) << std::endl;
 
         std::cout << ">>> Test simple done. <<<" << std::endl;
+
+        return accuracy;
     }
 
     static void test_complex(const std::string& train_seq_path,const std::string& train_path,
@@ -209,7 +211,7 @@ public:
                                  const std::string& predict_path, bool simple=true) {
         // true observations are always saved as indexes, don't tell me twice it's a bad design
         std::string sequence, true_obs;
-        std::tie(sequence, true_obs) = parse_data(true_path, seq_path);
+        std::tie(true_obs, sequence) = parse_data(true_path, seq_path);
 
         std::string predicted_obs = load_raw(predict_path);
 
@@ -248,11 +250,11 @@ int main() {
 //    Test::test_baum_welch_algorithm();
 //    Test::test_viterbi();
 //    Test::test_mm39_relaxed_simple();
-    Test::evaluate_islands(R"(..\data\three-even-islands\sequences\chr19_3.txt)", R"(..\data\three-even-islands\islands\chr19_3.txt)",
-           R"(..\data\three-even-islands\predicted\chr19_3_viterbi.txt)", false);
-//    Test::convert_from_str_to_islands(R"(..\data\three-even-islands\predicted\chr19_3_viterbi.txt)", false);
-//    Test::test_complex(R"(..\data\seven-even-islands\sequences\chr19_0.txt)", R"(..\data\seven-even-islands\islands\chr19_0.txt)",
-//      R"(..\data\three-even-islands\sequences\chr19_3.txt)", R"(..\data\three-even-islands\islands\chr19_3.txt)");
+//    Test::evaluate_islands(R"(..\data\seven-thrice-nonislands\sequences\chr19_14.txt)", R"(..\data\seven-thrice-nonislands\islands\chr19_14.txt)",
+//           R"(..\data\seven-thrice-nonislands\predicted\chr19_14_viterbi.txt)", true);
+//    Test::convert_from_str_to_islands(R"(..\data\seven-thrice-nonislands\predicted\chr19_14_viterbi.txt)", true);
+    Test::test_simple(R"(..\data\seven-even-islands\sequences\chr19_0.txt)", R"(..\data\seven-even-islands\islands\chr19_0.txt)",
+      R"(..\data\seven-thrice-nonislands\sequences\chr19_14.txt)", R"(..\data\seven-thrice-nonislands\islands\chr19_14.txt)");
 //    Test::test_complex(R"(..\data\even\sequences\chr19_0.txt)", R"(..\data\even\islands\chr19_0.txt)",
 //    R"(..\data\even\sequences\chr19_3.txt)", R"(..\data\even\islands\chr19_3.txt)");
     return 0;
